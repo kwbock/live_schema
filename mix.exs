@@ -10,6 +10,7 @@ defmodule LiveSchema.MixProject do
       version: @version,
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
+      consolidate_protocols: Mix.env() != :test,
       deps: deps(),
       description: description(),
       package: package(),
@@ -94,8 +95,7 @@ defmodule LiveSchema.MixProject do
           LiveSchema.Validators
         ],
         "Phoenix Integration": [
-          LiveSchema.View,
-          LiveSchema.Component
+          LiveSchema.View
         ],
         Testing: [
           LiveSchema.Test

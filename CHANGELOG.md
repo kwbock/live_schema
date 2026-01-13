@@ -34,7 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Rich error messages with hints
 - Phoenix integration
   - `LiveSchema.View` for LiveView integration
-  - `LiveSchema.Component` for Component integration
   - `LiveSchema.Form` for form handling
   - `LiveSchema.PubSub` for state synchronization
 - Developer experience

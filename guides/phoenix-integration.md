@@ -80,34 +80,6 @@ def handle_info({:new_post, post}, socket) do
 end
 ```
 
-## Component Integration
-
-### Schema-Aware Attributes
-
-```elixir
-defmodule MyAppWeb.Components.PostCard do
-  use Phoenix.Component
-  use LiveSchema.Component
-
-  # Type-safe attribute declarations
-  schema_attr :post, {:struct, MyApp.Post}, required: true
-  schema_attr :selected, :boolean, default: false
-  schema_attr :on_click, :any
-
-  def post_card(assigns) do
-    ~H"""
-    <div
-      class={["post-card", @selected && "selected"]}
-      phx-click={@on_click}
-    >
-      <h3><%= @post.title %></h3>
-      <p><%= @post.summary %></p>
-    </div>
-    """
-  end
-end
-```
-
 ## Form Integration
 
 ### Building Forms
