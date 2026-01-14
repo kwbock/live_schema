@@ -113,7 +113,6 @@ defmodule Mix.Tasks.LiveSchema.Validate do
   defp validate_type(:list), do: :ok
   defp validate_type({:list, inner}), do: validate_type(inner)
   defp validate_type({:map, k, v}), do: (validate_type(k); validate_type(v))
-  defp validate_type({:nullable, inner}), do: validate_type(inner)
   defp validate_type({:enum, values}) when is_list(values), do: :ok
   defp validate_type({:struct, module}) when is_atom(module), do: :ok
   defp validate_type({:tuple, types}) when is_list(types), do: Enum.each(types, &validate_type/1)

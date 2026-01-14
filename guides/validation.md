@@ -118,10 +118,10 @@ Validation errors contain detailed information:
 ### Formatting Errors
 
 ```elixir
-# Human-readable message
-error |> LiveSchema.ValidationError.to_string()
+# Human-readable format
+error |> LiveSchema.ValidationError.format()
 
-# JSON-serializable format
+# JSON-serializable format (for API responses)
 error |> LiveSchema.ValidationError.to_json()
 # %{
 #   field: :email,
@@ -130,73 +130,6 @@ error |> LiveSchema.ValidationError.to_json()
 #     %{type: :format, message: "must match pattern ~r/@/"}
 #   ]
 # }
-
-# For Phoenix forms
-errors |> LiveSchema.ValidationError.format_for_form()
-# [email: "must match pattern ~r/@/; must be at least 5 characters"]
-```
-
-## Changeset Validation
-
-Use changesets for complex validation workflows:
-
-```elixir
-state
-|> LiveSchema.change()
-|> LiveSchema.put(:name, params["name"])
-|> LiveSchema.put(:email, params["email"])
-|> validate_required([:name, :email])
-|> validate_email_unique()
-|> LiveSchema.validate()
-|> LiveSchema.apply()
-```
-
-With custom validation:
-
-```elixir
-changeset
-|> LiveSchema.Changeset.validate_change(:email, fn email ->
-  if EmailValidator.deliverable?(email) do
-    :ok
-  else
-    {:error, "email is not deliverable"}
-  end
-end)
-```
-
-## Validation in Forms
-
-Integrate validation with Phoenix forms:
-
-```elixir
-def handle_event("validate", %{"user" => params}, socket) do
-  changeset =
-    socket.assigns.state
-    |> LiveSchema.change()
-    |> LiveSchema.Form.cast(params, [:name, :email])
-    |> LiveSchema.validate()
-
-  form = LiveSchema.Form.changeset_to_form(changeset, as: :user)
-  {:noreply, assign(socket, :form, form)}
-end
-
-def handle_event("save", %{"user" => params}, socket) do
-  result =
-    socket.assigns.state
-    |> LiveSchema.change()
-    |> LiveSchema.Form.cast(params, [:name, :email])
-    |> LiveSchema.validate()
-    |> LiveSchema.apply()
-
-  case result do
-    {:ok, new_state} ->
-      {:noreply, assign(socket, state: new_state)}
-
-    {:error, changeset} ->
-      form = LiveSchema.Form.changeset_to_form(changeset, as: :user)
-      {:noreply, assign(socket, :form, form)}
-  end
-end
 ```
 
 ## Performance Considerations

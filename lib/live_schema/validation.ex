@@ -41,6 +41,17 @@ defmodule LiveSchema.Validation do
   """
   @spec validate_field(atom(), any(), map()) :: :ok | {:error, ValidationError.t()}
   def validate_field(name, value, field_info) do
+    # If field is nullable and value is nil, skip type validation
+    nullable = Map.get(field_info, :nullable, false)
+
+    if value == nil and nullable do
+      :ok
+    else
+      do_validate_field(name, value, field_info)
+    end
+  end
+
+  defp do_validate_field(name, value, field_info) do
     errors = []
 
     # Type validation

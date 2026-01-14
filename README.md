@@ -33,7 +33,7 @@ defmodule MyAppWeb.PostsLive.State do
 
   schema do
     field :posts, {:list, Post}, default: []
-    field :selected, {:nullable, Post}, default: nil
+    field :selected, Post, null: true
     field :loading, :boolean, default: false
 
     embeds_one :filter do

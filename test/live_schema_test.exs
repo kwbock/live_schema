@@ -10,7 +10,7 @@ defmodule LiveSchemaTest do
       field :count, :integer, default: 0
       field :active, :boolean, default: false
       field :tags, {:list, :string}, default: []
-      field :metadata, {:nullable, :map}
+      field :metadata, :map, null: true
     end
 
     reducer :increment do

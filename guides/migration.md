@@ -56,7 +56,7 @@ defmodule MyAppWeb.PostsLive.State do
   schema do
     # Core data
     field :posts, {:list, :any}, default: []
-    field :selected_post, {:nullable, :any}
+    field :selected_post, :any, null: true
 
     # Filter state (could be embeds_one)
     embeds_one :filter do
@@ -69,7 +69,7 @@ defmodule MyAppWeb.PostsLive.State do
 
     # UI state - keep simple fields at top level
     field :loading, :boolean, default: false
-    field :error, {:nullable, :string}
+    field :error, :string, null: true
   end
 end
 ```
@@ -227,7 +227,7 @@ Or include in state if it affects business logic:
 
 ```elixir
 schema do
-  field :editing_post, {:nullable, :any}
+  field :editing_post, :any, null: true
 end
 
 reducer :start_editing, [:post] do

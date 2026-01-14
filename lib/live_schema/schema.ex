@@ -12,7 +12,7 @@ defmodule LiveSchema.Schema do
 
         schema do
           field :posts, {:list, {:struct, Post}}, default: []
-          field :selected, {:nullable, {:struct, Post}}
+          field :selected, {:struct, Post}, null: true
           field :loading, :boolean, default: false
         end
       end
@@ -20,6 +20,7 @@ defmodule LiveSchema.Schema do
   ## Field Options
 
   - `:default` - Default value for the field
+  - `:null` - If true, field accepts nil values (default: false)
   - `:required` - If true, field must be non-nil after initialization
   - `:validate` - Custom validation function or list of validators
   - `:setter` - Custom setter name (use `false` to disable setter generation)
@@ -74,6 +75,7 @@ defmodule LiveSchema.Schema do
   ## Options
 
   - `:default` - Default value for the field
+  - `:null` - If true, field accepts nil values (default: false)
   - `:required` - If true, must be non-nil after initialization
   - `:validate` - Custom validator (function or list)
   - `:setter` - Custom setter name or `false` to disable
@@ -85,6 +87,7 @@ defmodule LiveSchema.Schema do
       field :name, :string
       field :count, :integer, default: 0
       field :status, {:enum, [:pending, :done]}, default: :pending
+      field :selected, {:struct, Post}, null: true
       field :email, :string, required: true, validate: &valid_email?/1
       field :password, :string, redact: true
 

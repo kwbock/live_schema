@@ -33,8 +33,8 @@ end
 # List of specific type
 field :posts, {:list, {:struct, Post}}
 
-# Nullable (value or nil)
-field :selected, {:nullable, {:struct, Post}}
+# Nullable (value or nil) - use null: true option
+field :selected, {:struct, Post}, null: true
 
 # Enum (one of specific values)
 field :status, {:enum, [:pending, :active, :done]}
@@ -158,18 +158,18 @@ defmodule MyApp.PostsState do
 
   schema do
     # Basic fields
-    field :current_user, {:nullable, {:struct, User}}
+    field :current_user, {:struct, User}, null: true
     field :posts, {:list, {:struct, Post}}, default: []
-    field :selected_post, {:nullable, {:struct, Post}}
+    field :selected_post, {:struct, Post}, null: true
 
     # UI state
     field :loading, :boolean, default: false
-    field :error, {:nullable, :string}
+    field :error, :string, null: true
 
     # Nested filter state
     embeds_one :filter do
       field :status, {:enum, [:all, :published, :draft]}, default: :all
-      field :author_id, {:nullable, :integer}
+      field :author_id, :integer, null: true
       field :search, :string, default: ""
     end
 

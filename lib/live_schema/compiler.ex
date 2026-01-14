@@ -81,12 +81,22 @@ defmodule LiveSchema.Compiler do
   defp build_all_fields(fields, embeds, parent_module) do
     field_list =
       Enum.map(fields, fn {name, type, opts} ->
+        nullable = Keyword.get(opts, :null, false)
+
+        # If field is nullable and no explicit default, default to nil
+        default =
+          case Keyword.fetch(opts, :default) do
+            {:ok, value} -> value
+            :error -> if nullable, do: nil, else: LiveSchema.Types.default_for_type(type)
+          end
+
         %{
           name: name,
           type: type,
           opts: opts,
-          default: Keyword.get(opts, :default, LiveSchema.Types.default_for_type(type)),
+          default: default,
           required: Keyword.get(opts, :required, false),
+          nullable: nullable,
           setter: Keyword.get(opts, :setter, :"set_#{name}"),
           redact: Keyword.get(opts, :redact, false),
           doc: Keyword.get(opts, :doc),
@@ -121,6 +131,7 @@ defmodule LiveSchema.Compiler do
           opts: opts,
           default: default,
           required: false,
+          nullable: Keyword.get(opts, :null, cardinality == :one),
           setter: :"set_#{name}",
           redact: false,
           doc: Keyword.get(opts, :doc),
@@ -152,12 +163,12 @@ defmodule LiveSchema.Compiler do
       Enum.map(fields, fn field ->
         type_ast = LiveSchema.Types.type_to_spec(field.type)
 
-        # Make non-required fields nullable in the type
+        # Add | nil if field is nullable
         type_ast =
-          if field.required do
-            type_ast
-          else
+          if field.nullable do
             quote do: unquote(type_ast) | nil
+          else
+            type_ast
           end
 
         {field.name, type_ast}
@@ -327,6 +338,7 @@ defmodule LiveSchema.Compiler do
            type: field.type,
            default: field.default,
            required: field.required,
+           nullable: field.nullable,
            setter: field.setter,
            redact: field.redact,
            doc: field.doc

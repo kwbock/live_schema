@@ -231,10 +231,6 @@ defmodule LiveSchema.Test do
       StreamData.list_of(type_generator(inner))
     end
 
-    defp type_generator({:nullable, inner}) do
-      StreamData.one_of([StreamData.constant(nil), type_generator(inner)])
-    end
-
     defp type_generator({:enum, values}) do
       StreamData.member_of(values)
     end

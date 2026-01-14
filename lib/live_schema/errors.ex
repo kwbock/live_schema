@@ -107,7 +107,7 @@ defmodule LiveSchema.TypeError do
     %{
       error
       | hint:
-          "The value is nil but the field is not nullable.\n    Use {:nullable, type} if nil is a valid value."
+          "The value is nil but the field is not nullable.\n    Use `null: true` option if nil is a valid value."
     }
   end
 
@@ -278,20 +278,4 @@ defmodule LiveSchema.ValidationError do
     }
   end
 
-  @doc """
-  Formats errors for Phoenix form integration.
-
-  Returns a keyword list suitable for use with Phoenix.HTML.Form.
-  """
-  @spec format_for_form([t()]) :: keyword()
-  def format_for_form(errors) when is_list(errors) do
-    Enum.flat_map(errors, fn %__MODULE__{field: field, errors: errs} ->
-      messages = Enum.map(errs, fn {_type, msg} -> msg end)
-
-      case messages do
-        [single] -> [{field, single}]
-        multiple -> [{field, Enum.join(multiple, "; ")}]
-      end
-    end)
-  end
 end

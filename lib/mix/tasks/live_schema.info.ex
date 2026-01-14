@@ -72,11 +72,12 @@ defmodule Mix.Tasks.LiveSchema.Info do
       |> Enum.map(fn field ->
         info = module.__live_schema__({:field, field})
         type_str = format_type(info.type)
+        nullable_str = if info[:nullable], do: " | nil", else: ""
         default_str = if info.default, do: " = #{inspect(info.default)}", else: ""
         required_str = if info.required, do: " (required)", else: ""
         redacted_str = if info.redact, do: " [redacted]", else: ""
 
-        "  #{field}: #{type_str}#{default_str}#{required_str}#{redacted_str}"
+        "  #{field}: #{type_str}#{nullable_str}#{default_str}#{required_str}#{redacted_str}"
       end)
       |> Enum.join("\n")
     end
@@ -103,7 +104,6 @@ defmodule Mix.Tasks.LiveSchema.Info do
   end
 
   defp format_type({:list, inner}), do: "[#{format_type(inner)}]"
-  defp format_type({:nullable, inner}), do: "#{format_type(inner)} | nil"
   defp format_type({:enum, values}), do: Enum.join(values, " | ")
   defp format_type({:struct, mod}), do: "%#{inspect(mod)}{}"
   defp format_type({:map, k, v}), do: "%{#{format_type(k)} => #{format_type(v)}}"

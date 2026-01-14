@@ -80,47 +80,6 @@ defmodule LiveSchema do
   end
 
   @doc """
-  Creates a changeset for making multiple changes to a state struct.
-
-  ## Example
-
-      state
-      |> LiveSchema.change()
-      |> LiveSchema.put(:name, "New Name")
-      |> LiveSchema.put(:count, 5)
-      |> LiveSchema.validate()
-      |> LiveSchema.apply()
-
-  """
-  defdelegate change(state), to: LiveSchema.Changeset, as: :new
-
-  @doc """
-  Puts a change into the changeset.
-  """
-  defdelegate put(changeset, field, value), to: LiveSchema.Changeset
-
-  @doc """
-  Validates all changes in the changeset.
-  """
-  defdelegate validate(changeset), to: LiveSchema.Changeset
-
-  @doc """
-  Applies validated changes to the state.
-
-  Returns `{:ok, state}` or `{:error, changeset}`.
-  """
-  def apply(%LiveSchema.Changeset{} = changeset) do
-    LiveSchema.Changeset.apply(changeset)
-  end
-
-  @doc """
-  Applies validated changes to the state, raising on error.
-  """
-  def apply!(%LiveSchema.Changeset{} = changeset) do
-    LiveSchema.Changeset.apply!(changeset)
-  end
-
-  @doc """
   Computes the difference between two states.
 
   Returns a map describing what changed between the old and new state.

@@ -34,9 +34,9 @@ defmodule MyApp.PostsState do
 
   schema do
     field :posts, {:list, :any}, default: []
-    field :selected, {:nullable, :any}
+    field :selected, :any, null: true
     field :loading, :boolean, default: false
-    field :error, {:nullable, :string}
+    field :error, :string, null: true
   end
 
   # Reducers for state transitions

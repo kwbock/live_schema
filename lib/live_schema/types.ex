@@ -22,17 +22,20 @@ defmodule LiveSchema.Types do
 
   - `{:list, inner_type}` - List of specific type
   - `{:map, key_type, value_type}` - Map with specific key/value types
-  - `{:nullable, inner_type}` - Value or `nil`
   - `{:enum, [values]}` - One of the specified values
   - `{:struct, Module}` - A struct of the given module
   - `{:tuple, [types]}` - A tuple with specific element types
+
+  ### Field Options
+
+  - `null: true` - Field accepts `nil` values (default: false)
 
   ## Examples
 
       field :name, :string
       field :count, :integer, default: 0
       field :posts, {:list, {:struct, Post}}
-      field :selected, {:nullable, {:struct, Post}}
+      field :selected, {:struct, Post}, null: true
       field :status, {:enum, [:pending, :active, :done]}
       field :metadata, {:map, :atom, :any}
 
@@ -42,7 +45,6 @@ defmodule LiveSchema.Types do
   @type parameterized ::
           {:list, type_spec()}
           | {:map, type_spec(), type_spec()}
-          | {:nullable, type_spec()}
           | {:enum, [any()]}
           | {:struct, module()}
           | {:tuple, [type_spec()]}
@@ -64,9 +66,6 @@ defmodule LiveSchema.Types do
       {:error, "expected string, got integer"}
 
       iex> LiveSchema.Types.validate_type(:active, {:enum, [:pending, :active]})
-      :ok
-
-      iex> LiveSchema.Types.validate_type(nil, {:nullable, :string})
       :ok
 
   """
@@ -95,9 +94,6 @@ defmodule LiveSchema.Types do
   def validate_type(value, :list), do: {:error, "expected list, got #{type_of(value)}"}
 
   # Parameterized types
-  def validate_type(nil, {:nullable, _inner_type}), do: :ok
-  def validate_type(value, {:nullable, inner_type}), do: validate_type(value, inner_type)
-
   def validate_type(value, {:list, inner_type}) when is_list(value) do
     value
     |> Enum.with_index()
@@ -217,11 +213,6 @@ defmodule LiveSchema.Types do
     quote do: list()
   end
 
-  def type_to_spec({:nullable, inner_type}) do
-    inner = type_to_spec(inner_type)
-    quote do: unquote(inner) | nil
-  end
-
   def type_to_spec({:list, inner_type}) do
     inner = type_to_spec(inner_type)
     quote do: [unquote(inner)]
@@ -283,7 +274,6 @@ defmodule LiveSchema.Types do
   def default_for_type(:list), do: []
   def default_for_type({:list, _}), do: []
   def default_for_type({:map, _, _}), do: %{}
-  def default_for_type({:nullable, _}), do: nil
   def default_for_type({:enum, [first | _]}), do: first
   def default_for_type({:struct, _}), do: nil
   def default_for_type({:tuple, _}), do: nil

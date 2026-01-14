@@ -43,12 +43,6 @@ defmodule LiveSchema.TypesTest do
   end
 
   describe "validate_type/2 with parameterized types" do
-    test "validates nullable" do
-      assert Types.validate_type(nil, {:nullable, :string}) == :ok
-      assert Types.validate_type("hello", {:nullable, :string}) == :ok
-      assert {:error, _} = Types.validate_type(123, {:nullable, :string})
-    end
-
     test "validates lists" do
       assert Types.validate_type([1, 2, 3], {:list, :integer}) == :ok
       assert Types.validate_type([], {:list, :integer}) == :ok
@@ -72,11 +66,6 @@ defmodule LiveSchema.TypesTest do
       assert Types.type_to_spec(:string) == quote(do: String.t())
     end
 
-    test "converts nullable types" do
-      spec = Types.type_to_spec({:nullable, :string})
-      assert spec == quote(do: String.t() | nil)
-    end
-
     test "converts list types" do
       spec = Types.type_to_spec({:list, :integer})
       assert spec == quote(do: [integer()])
@@ -87,7 +76,6 @@ defmodule LiveSchema.TypesTest do
     test "returns appropriate defaults" do
       assert Types.default_for_type(:list) == []
       assert Types.default_for_type({:list, :string}) == []
-      assert Types.default_for_type({:nullable, :string}) == nil
       assert Types.default_for_type({:enum, [:a, :b]}) == :a
     end
   end
