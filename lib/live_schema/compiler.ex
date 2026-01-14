@@ -70,6 +70,7 @@ defmodule LiveSchema.Compiler do
     quote do
       defmodule unquote(module_name) do
         use LiveSchema
+
         schema do
           unquote(block)
         end
@@ -149,7 +150,7 @@ defmodule LiveSchema.Compiler do
   defp generate_struct(fields) do
     struct_fields =
       Enum.map(fields, fn field ->
-        {field.name, field.default}
+        {field.name, Macro.escape(field.default)}
       end)
 
     quote do
