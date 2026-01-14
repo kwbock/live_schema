@@ -2,7 +2,7 @@ defmodule LiveSchema.MixProject do
   use Mix.Project
 
   @version "0.1.0"
-  @source_url "https://github.com/your-org/live_schema"
+  @source_url "https://github.com/kwbock/live_schema"
 
   def project do
     [
@@ -34,7 +34,6 @@ defmodule LiveSchema.MixProject do
       # Optional Phoenix/LiveView dependencies
       {:phoenix, "~> 1.7", optional: true},
       {:phoenix_live_view, "~> 0.20", optional: true},
-      {:phoenix_html, "~> 4.0", optional: true},
 
       # Telemetry for observability
       {:telemetry, "~> 1.0"},
