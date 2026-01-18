@@ -28,6 +28,9 @@ live_schema-*.tar
 # Dialyzer PLTs
 /priv/plts/
 
+# Ignore hidden directories
+/.*
+
 # IDE
 .idea/
 *.iml
