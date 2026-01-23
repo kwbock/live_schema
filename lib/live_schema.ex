@@ -63,7 +63,7 @@ defmodule LiveSchema do
         ]
 
       import LiveSchema.Action,
-        only: [action: 2, action: 3, async_action: 2, async_action: 3]
+        only: [action: 2, action: 3, async_action: 2, async_action: 3, reaction: 2, reaction: 3]
 
       import LiveSchema.Middleware, only: [before_action: 1, after_action: 1]
 

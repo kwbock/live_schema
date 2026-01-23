@@ -75,6 +75,55 @@ defmodule LiveSchema.View do
         end
       end
 
+  ## Auto-Generated Event Handlers
+
+  Use `generate_events: true` to automatically generate `handle_event/3` callbacks
+  for all schema actions. Events are named `"ModuleName:action_name"`:
+
+      defmodule MyAppWeb.PostsLive do
+        use MyAppWeb, :live_view
+        use LiveSchema.View, schema: __MODULE__.State, generate_events: true
+
+        defmodule State do
+          use LiveSchema
+
+          schema do
+            field :count, :integer, default: 0
+            field :selected_id, :integer, null: true
+          end
+
+          action :increment do
+            set_count(state, state.count + 1)
+          end
+
+          # Typed arguments are coerced from strings
+          action :select_post, [id: :integer] do
+            set_selected_id(state, id)
+          end
+
+          async_action :load_posts, [filter: :atom] do
+            posts = Repo.all(Post.filter(filter))
+            set_posts(state, posts)
+          end
+        end
+      end
+
+  Template usage:
+
+      <button phx-click="State:increment">+1</button>
+      <button phx-click="State:select_post" phx-value-id={post.id}>Select</button>
+
+  Supported argument types for automatic coercion:
+  - `:integer` - String to integer
+  - `:float` - String to float
+  - `:boolean` - "true"/"false" to boolean
+  - `:atom` - String to existing atom
+  - `:string` - Ensure string output
+  - `nil` or untyped - Passthrough (no coercion)
+
+  User-defined `handle_event` clauses take precedence over generated ones
+  when they have more specific patterns.
+
   ## Helpers Provided
 
   - `init_state/1` - Initialize default `:state` with `Schema.new()`
@@ -101,11 +150,23 @@ defmodule LiveSchema.View do
           raise ArgumentError, "LiveSchema.View requires either :schema or :schemas option"
       end
 
+    generate_events = Keyword.get(opts, :generate_events, false)
+
     # Build a list of {key, module} pairs that can be properly unquoted
     schemas_pairs =
       Enum.map(schemas, fn {key, mod} ->
         {key, mod}
       end)
+
+    before_compile =
+      if generate_events do
+        quote do
+          @before_compile LiveSchema.View.EventGenerator
+        end
+      else
+        quote do
+        end
+      end
 
     quote do
       @live_schemas Map.new(unquote(schemas_pairs))
@@ -120,6 +181,8 @@ defmodule LiveSchema.View do
           update_state: 2,
           update_state: 3
         ]
+
+      unquote(before_compile)
 
       @doc false
       def __live_schemas__, do: @live_schemas

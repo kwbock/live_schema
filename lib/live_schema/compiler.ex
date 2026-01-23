@@ -346,6 +346,10 @@ defmodule LiveSchema.Compiler do
          }}
       end)
 
+    # Convert actions to the format expected by EventGenerator
+    # Each action is {name, [{arg_name, arg_type}, ...], :sync | :async}
+    actions_data = Macro.escape(actions)
+
     [
       quote do
         @doc """
@@ -374,6 +378,25 @@ defmodule LiveSchema.Compiler do
             %unquote(__MODULE__){}
           end
         end
+
+        @doc """
+        Returns detailed information about all actions.
+
+        Returns a list of tuples: `{action_name, [{arg_name, arg_type}, ...], :sync | :async | :reply}`
+
+        ## Examples
+
+            iex> MyState.__actions__()
+            [
+              {:increment, [], :sync},
+              {:select_post, [{:id, :integer}], :sync},
+              {:load_posts, [{:filter, :atom}], :async},
+              {:get_count, [], :reply}
+            ]
+
+        """
+        @spec __actions__() :: [{atom(), [{atom(), atom() | nil}], :sync | :async | :reply}]
+        def __actions__, do: unquote(actions_data)
       end
     ]
   end
