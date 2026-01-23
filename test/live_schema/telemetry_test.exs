@@ -23,9 +23,9 @@ defmodule LiveSchema.TelemetryTest do
     :telemetry.attach_many(
       handler_id,
       [
-        [:live_schema, :reducer, :start],
-        [:live_schema, :reducer, :stop],
-        [:live_schema, :reducer, :exception],
+        [:live_schema, :action, :start],
+        [:live_schema, :action, :stop],
+        [:live_schema, :action, :exception],
         [:live_schema, :validation, :failure]
       ],
       &__MODULE__.handle_telemetry_event/4,
@@ -44,7 +44,7 @@ defmodule LiveSchema.TelemetryTest do
     test "emits start event before execution" do
       Telemetry.span(TestSchema, :increment, [], fn -> :ok end)
 
-      assert_receive {:telemetry_event, [:live_schema, :reducer, :start], measurements, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :start], measurements, metadata}
 
       assert is_integer(measurements.system_time)
       assert metadata.schema == TestSchema
@@ -55,7 +55,7 @@ defmodule LiveSchema.TelemetryTest do
     test "emits stop event after successful execution" do
       Telemetry.span(TestSchema, :increment, [], fn -> :ok end)
 
-      assert_receive {:telemetry_event, [:live_schema, :reducer, :stop], measurements, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :stop], measurements, metadata}
 
       assert is_integer(measurements.duration)
       assert measurements.duration >= 0
@@ -72,7 +72,7 @@ defmodule LiveSchema.TelemetryTest do
     test "includes action args in metadata" do
       Telemetry.span(TestSchema, :set_value, ["hello", 123], fn -> :ok end)
 
-      assert_receive {:telemetry_event, [:live_schema, :reducer, :start], _measurements, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :start], _measurements, metadata}
 
       assert metadata.action_args == ["hello", 123]
     end
@@ -84,7 +84,7 @@ defmodule LiveSchema.TelemetryTest do
         end)
       end
 
-      assert_receive {:telemetry_event, [:live_schema, :reducer, :exception], measurements, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :exception], measurements, metadata}
 
       assert is_integer(measurements.duration)
       assert metadata.schema == TestSchema
@@ -101,7 +101,7 @@ defmodule LiveSchema.TelemetryTest do
         end)
       end
 
-      assert_receive {:telemetry_event, [:live_schema, :reducer, :exception], _measurements, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :exception], _measurements, metadata}
 
       assert metadata.kind == :throw
       assert metadata.reason == :thrown_value
@@ -114,7 +114,7 @@ defmodule LiveSchema.TelemetryTest do
         end)
       end
 
-      assert_receive {:telemetry_event, [:live_schema, :reducer, :exception], _measurements, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :exception], _measurements, metadata}
 
       assert metadata.kind == :exit
       assert metadata.reason == :normal
@@ -126,7 +126,7 @@ defmodule LiveSchema.TelemetryTest do
         :ok
       end)
 
-      assert_receive {:telemetry_event, [:live_schema, :reducer, :stop], measurements, _metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :stop], measurements, _metadata}
 
       duration_ms = System.convert_time_unit(measurements.duration, :native, :millisecond)
       assert duration_ms >= 50
@@ -172,7 +172,7 @@ defmodule LiveSchema.TelemetryTest do
       end)
 
       # Verify log output was produced
-      assert log =~ "LiveSchema reducer"
+      assert log =~ "LiveSchema action"
       assert log =~ "validation failed"
     end
 
@@ -188,7 +188,7 @@ defmodule LiveSchema.TelemetryTest do
       assert {:error, :already_exists} =
                :telemetry.attach_many(
                  "live_schema-default-handlers",
-                 [[:live_schema, :reducer, :start]],
+                 [[:live_schema, :action, :start]],
                  &__MODULE__.handle_telemetry_event/4,
                  nil
                )
@@ -215,31 +215,31 @@ defmodule LiveSchema.TelemetryTest do
   describe "handle_event/4 logging" do
     import ExUnit.CaptureLog
 
-    test "logs reducer start event" do
+    test "logs action start event" do
       log =
         capture_log(fn ->
           Telemetry.attach_default_handlers()
           Telemetry.span(TestSchema, :my_action, [], fn -> :ok end)
         end)
 
-      assert log =~ "LiveSchema reducer starting"
+      assert log =~ "LiveSchema action starting"
       assert log =~ "my_action"
       assert log =~ "TestSchema"
     end
 
-    test "logs reducer stop event with duration" do
+    test "logs action stop event with duration" do
       log =
         capture_log(fn ->
           Telemetry.attach_default_handlers()
           Telemetry.span(TestSchema, :my_action, [], fn -> :ok end)
         end)
 
-      assert log =~ "LiveSchema reducer completed"
+      assert log =~ "LiveSchema action completed"
       assert log =~ "my_action"
       assert log =~ "ms"
     end
 
-    test "logs reducer exception event" do
+    test "logs action exception event" do
       log =
         capture_log(fn ->
           Telemetry.attach_default_handlers()
@@ -252,7 +252,7 @@ defmodule LiveSchema.TelemetryTest do
           end
         end)
 
-      assert log =~ "LiveSchema reducer failed"
+      assert log =~ "LiveSchema action failed"
       assert log =~ "failing"
       assert log =~ "boom"
     end
@@ -278,11 +278,11 @@ defmodule LiveSchema.TelemetryTest do
         field :count, :integer, default: 0
       end
 
-      reducer :increment do
+      action :increment do
         set_count(state, state.count + 1)
       end
 
-      reducer :fail do
+      action :fail do
         _unused = state
         raise "intentional failure"
       end
@@ -298,11 +298,11 @@ defmodule LiveSchema.TelemetryTest do
         TelemetryTestSchema.apply(state, {:increment})
       end)
 
-      assert_receive {:telemetry_event, [:live_schema, :reducer, :start], _, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :start], _, metadata}
       assert metadata.schema == TelemetryTestSchema
       assert metadata.action == :increment
 
-      assert_receive {:telemetry_event, [:live_schema, :reducer, :stop], _, _}
+      assert_receive {:telemetry_event, [:live_schema, :action, :stop], _, _}
     end
   end
 end

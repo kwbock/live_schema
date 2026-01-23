@@ -7,7 +7,7 @@ A comprehensive state management library for Phoenix LiveView with DSL, type che
 - **Schema DSL** - Define your state structure with a clean, expressive syntax
 - **Type System** - Built-in types with runtime validation
 - **Auto-generated Setters** - Reduce boilerplate with automatic setter functions
-- **Reducers** - Elm-style state transitions for complex updates
+- **Actions** - Elm-style state transitions for complex updates
 - **Phoenix Integration** - Seamless integration with LiveView and Components
 - **Testing Utilities** - Helpers for testing state logic in isolation
 
@@ -42,12 +42,12 @@ defmodule MyAppWeb.PostsLive.State do
     end
   end
 
-  reducer :select_post, [:id] do
+  action :select_post, [:id] do
     post = Enum.find(state.posts, &(&1.id == id))
     set_selected(state, post)
   end
 
-  reducer :update_filter, [:field, :value] do
+  action :update_filter, [:field, :value] do
     update_in(state.filter, &Map.put(&1, field, value))
   end
 end
@@ -75,7 +75,7 @@ end
 
 - [Getting Started](guides/getting-started.md)
 - [Schema DSL](guides/schema-dsl.md)
-- [Reducers](guides/reducers.md)
+- [Actions](guides/actions.md)
 - [Validation](guides/validation.md)
 - [Phoenix Integration](guides/phoenix-integration.md)
 - [Testing](guides/testing.md)

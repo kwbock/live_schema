@@ -27,7 +27,7 @@ end
 The main benefit of LiveSchema is that state logic can be tested without LiveView:
 
 ```elixir
-describe "select_post/2 reducer" do
+describe "select_post/2 action" do
   test "selects a post by id" do
     posts = [
       %{id: 1, title: "First"},
@@ -65,23 +65,23 @@ test "new state is valid" do
 end
 ```
 
-### assert_reducer_result/3
+### assert_action_result/3
 
-Asserts a reducer produces expected changes:
+Asserts an action produces expected changes:
 
 ```elixir
 test "increment increases count" do
   state = CounterState.new!(count: 0)
 
   # Assert specific field values
-  assert_reducer_result(state, {:increment}, %{count: 1})
+  assert_action_result(state, {:increment}, %{count: 1})
 end
 
 test "loading sets loading flag" do
   state = PostsState.new!()
 
   # Use function for complex assertions
-  assert_reducer_result(state, {:start_loading}, fn new_state ->
+  assert_action_result(state, {:start_loading}, fn new_state ->
     assert new_state.loading == true
     assert new_state.error == nil
   end)
@@ -304,7 +304,7 @@ Beyond testing, state diffing enables several production optimizations.
 
 ### Debugging State Changes
 
-Track what changed during complex reducer chains:
+Track what changed during complex action chains:
 
 ```elixir
 defmodule MyApp.StateDebugger do
@@ -504,7 +504,7 @@ defmodule MyApp.PostsStateTest do
     end
   end
 
-  describe "select_post reducer" do
+  describe "select_post action" do
     setup do
       posts = [
         %{id: 1, title: "First Post"},
@@ -528,7 +528,7 @@ defmodule MyApp.PostsStateTest do
     end
   end
 
-  describe "filter reducers" do
+  describe "filter actions" do
     test "applying filter resets to page 1" do
       state = build(PostsState,
         filter: %{status: :all},

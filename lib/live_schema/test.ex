@@ -13,7 +13,7 @@ defmodule LiveSchema.Test do
 
         alias MyApp.PostsState
 
-        describe "select_post reducer" do
+        describe "select_post action" do
           test "selects a post by id" do
             state = PostsState.new!(posts: [%Post{id: 1}, %Post{id: 2}])
 
@@ -27,8 +27,8 @@ defmodule LiveSchema.Test do
   ## Assertions
 
   - `assert_valid_state/1` - Asserts state passes all validations
-  - `assert_reducer_result/3` - Asserts reducer produces expected state
-  - `refute_reduces/2` - Asserts action raises ActionError
+  - `assert_action_result/3` - Asserts action produces expected state
+  - `refute_action/2` - Asserts action raises ActionError
   - `assert_changed/3` - Asserts specific fields changed
 
   ## Generators
@@ -97,15 +97,15 @@ defmodule LiveSchema.Test do
   ## Examples
 
       # Full state comparison
-      assert_reducer_result(state, {:increment}, %{count: 1})
+      assert_action_result(state, {:increment}, %{count: 1})
 
       # Function-based assertion
-      assert_reducer_result(state, {:increment}, fn new_state ->
+      assert_action_result(state, {:increment}, fn new_state ->
         assert new_state.count > state.count
       end)
 
   """
-  defmacro assert_reducer_result(state, action, expected) do
+  defmacro assert_action_result(state, action, expected) do
     quote do
       state = unquote(state)
       action = unquote(action)
@@ -141,11 +141,11 @@ defmodule LiveSchema.Test do
 
   ## Examples
 
-      refute_reduces(state, {:invalid_action})
-      refute_reduces(state, {:increment, -1})  # If guarded to require positive
+      refute_action(state, {:invalid_action})
+      refute_action(state, {:increment, -1})  # If guarded to require positive
 
   """
-  defmacro refute_reduces(state, action) do
+  defmacro refute_action(state, action) do
     quote do
       state = unquote(state)
       action = unquote(action)
@@ -247,7 +247,7 @@ defmodule LiveSchema.Test do
   end
 
   @doc """
-  Mocks an async reducer for testing.
+  Mocks an async action for testing.
 
   ## Examples
 

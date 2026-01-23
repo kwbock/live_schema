@@ -228,5 +228,5 @@ def new!(attrs)
 def __live_schema__(:fields)
 def __live_schema__({:field, name})
 def __live_schema__(:embeds)
-def __live_schema__(:reducers)
+def __live_schema__(:actions)
 ```

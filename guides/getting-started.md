@@ -40,23 +40,23 @@ defmodule MyApp.PostsState do
   end
 
   # Reducers for state transitions
-  reducer :select_post, [:id] do
+  action :select_post, [:id] do
     post = Enum.find(state.posts, &(&1.id == id))
     set_selected(state, post)
   end
 
-  reducer :set_loading, [:loading] do
+  action :set_loading, [:loading] do
     set_loading(state, loading)
   end
 
-  reducer :load_posts_success, [:posts] do
+  action :load_posts_success, [:posts] do
     state
     |> set_posts(posts)
     |> set_loading(false)
     |> set_error(nil)
   end
 
-  reducer :load_posts_error, [:message] do
+  action :load_posts_error, [:message] do
     state
     |> set_loading(false)
     |> set_error(message)
@@ -138,6 +138,6 @@ By using LiveSchema, you automatically get:
 ## Next Steps
 
 - [Schema DSL](schema-dsl.md) - Learn all the field options
-- [Reducers](reducers.md) - Complex state transitions
+- [Actions](actions.md) - Complex state transitions
 - [Validation](validation.md) - Runtime type checking
 - [Phoenix Integration](phoenix-integration.md) - LiveView and Component helpers

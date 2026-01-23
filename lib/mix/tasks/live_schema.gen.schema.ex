@@ -34,7 +34,7 @@ defmodule Mix.Tasks.LiveSchema.Gen.Schema do
 
   ## Options
 
-  - `--no-reducers` - Don't generate example reducers
+  - `--no-actions` - Don't generate example actions
   - `--context` - The context module (default: derived from app name)
 
   """
@@ -44,7 +44,7 @@ defmodule Mix.Tasks.LiveSchema.Gen.Schema do
   @impl Mix.Task
   def run(args) do
     {opts, parsed, _} = OptionParser.parse(args, switches: [
-      no_reducers: :boolean,
+      no_actions: :boolean,
       context: :string
     ])
 
@@ -136,7 +136,7 @@ defmodule Mix.Tasks.LiveSchema.Gen.Schema do
 
   defp generate_content(module, fields, opts) do
     field_definitions = generate_field_definitions(fields)
-    reducer_definitions = if opts[:no_reducers], do: "", else: generate_example_reducers(fields)
+    action_definitions = if opts[:no_actions], do: "", else: generate_example_actions(fields)
 
     """
     defmodule #{inspect(module)} do
@@ -149,7 +149,7 @@ defmodule Mix.Tasks.LiveSchema.Gen.Schema do
       schema do
     #{field_definitions}
       end
-    #{reducer_definitions}
+    #{action_definitions}
     end
     """
   end
@@ -195,13 +195,13 @@ defmodule Mix.Tasks.LiveSchema.Gen.Schema do
   defp default_for_type(:string, _), do: ~s("")
   defp default_for_type(_, _), do: nil
 
-  defp generate_example_reducers(_fields) do
-    # Generate a simple reset reducer
+  defp generate_example_actions(_fields) do
+    # Generate a simple reset action
     """
 
-      # Example reducers - customize as needed
+      # Example actions - customize as needed
 
-      reducer :reset do
+      action :reset do
         new()
       end
     """

@@ -19,7 +19,7 @@ defmodule MyAppWeb.PostsLive do
       field :loading, :boolean, default: false
     end
 
-    reducer :set_posts, [:posts] do
+    action :set_posts, [:posts] do
       state
       |> set_posts(posts)
       |> set_loading(false)
@@ -60,7 +60,7 @@ end
 
 #### `apply_action/2`
 
-Applies a reducer action:
+Applies an action:
 
 ```elixir
 def handle_event("select", %{"id" => id}, socket) do
@@ -93,8 +93,8 @@ def start(_type, _args) do
   # Or attach custom handlers
   :telemetry.attach(
     "my-handler",
-    [:live_schema, :reducer, :stop],
-    &MyApp.Telemetry.handle_reducer/4,
+    [:live_schema, :action, :stop],
+    &MyApp.Telemetry.handle_action/4,
     nil
   )
 
@@ -104,7 +104,7 @@ end
 
 Events emitted:
 
-- `[:live_schema, :reducer, :start]` - Before reducer execution
-- `[:live_schema, :reducer, :stop]` - After successful execution
-- `[:live_schema, :reducer, :exception]` - On error
+- `[:live_schema, :action, :start]` - Before action execution
+- `[:live_schema, :action, :stop]` - After successful execution
+- `[:live_schema, :action, :exception]` - On error
 - `[:live_schema, :validation, :failure]` - On validation failure

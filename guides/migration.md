@@ -76,7 +76,7 @@ end
 
 ### Step 4: Define Reducers
 
-Convert your event handlers' state logic into reducers:
+Convert your event handlers' state logic into actions:
 
 ```elixir
 # Before: Logic in handle_event
@@ -90,8 +90,8 @@ def handle_event("filter", %{"status" => status}, socket) do
    |> assign(:page, 1)}
 end
 
-# After: Logic in reducer
-reducer :apply_filter, [:status] do
+# After: Logic in action
+action :apply_filter, [:status] do
   posts = fetch_posts(status: status)
 
   state
@@ -180,7 +180,7 @@ end
 - [ ] Audit all assigns in mount/handle_*/render
 - [ ] Group related state
 - [ ] Create State module with schema
-- [ ] Convert state transitions to reducers
+- [ ] Convert state transitions to actions
 - [ ] Update LiveView to use LiveSchema.View
 - [ ] Update templates to use @state
 - [ ] Keep truly ephemeral UI state as assigns
@@ -230,11 +230,11 @@ schema do
   field :editing_post, :any, null: true
 end
 
-reducer :start_editing, [:post] do
+action :start_editing, [:post] do
   set_editing_post(state, post)
 end
 
-reducer :cancel_editing do
+action :cancel_editing do
   set_editing_post(state, nil)
 end
 ```

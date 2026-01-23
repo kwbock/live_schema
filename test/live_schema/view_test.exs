@@ -12,11 +12,11 @@ defmodule LiveSchema.ViewTest do
       field :name, :string, default: ""
     end
 
-    reducer :increment do
+    action :increment do
       set_count(state, state.count + 1)
     end
 
-    reducer :set_name, [:name] do
+    action :set_name, [:name] do
       set_name(state, name)
     end
   end
@@ -29,11 +29,11 @@ defmodule LiveSchema.ViewTest do
       field :width, :integer, default: 250
     end
 
-    reducer :toggle do
+    action :toggle do
       set_expanded(state, !state.expanded)
     end
 
-    reducer :set_width, [:width] do
+    action :set_width, [:width] do
       set_width(state, width)
     end
   end
@@ -46,13 +46,13 @@ defmodule LiveSchema.ViewTest do
       field :title, :string, default: ""
     end
 
-    reducer :open, [:title] do
+    action :open, [:title] do
       state
       |> set_open(true)
       |> set_title(title)
     end
 
-    reducer :close do
+    action :close do
       state
       |> set_open(false)
       |> set_title("")
@@ -408,7 +408,7 @@ defmodule LiveSchema.ViewTest do
 
       :telemetry.attach(
         handler_id,
-        [:live_schema, :reducer, :applied],
+        [:live_schema, :action, :applied],
         &__MODULE__.handle_telemetry_event/4,
         %{test_pid: test_pid}
       )
@@ -429,7 +429,7 @@ defmodule LiveSchema.ViewTest do
 
       TelemetryView.test_apply_state(socket)
 
-      assert_receive {:telemetry_event, [:live_schema, :reducer, :applied], _, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :applied], _, metadata}
       assert metadata.assign_key == :state
       assert metadata.action == :increment
       assert metadata.schema == MainState
@@ -444,7 +444,7 @@ defmodule LiveSchema.ViewTest do
 
       TelemetryView.test_apply_sidebar(socket)
 
-      assert_receive {:telemetry_event, [:live_schema, :reducer, :applied], _, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :applied], _, metadata}
       assert metadata.assign_key == :sidebar
       assert metadata.action == :toggle
       assert metadata.schema == SidebarState

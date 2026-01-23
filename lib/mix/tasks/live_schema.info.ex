@@ -10,7 +10,7 @@ defmodule Mix.Tasks.LiveSchema.Info do
 
   - All defined fields with their types and defaults
   - Embedded structs
-  - Available reducers
+  - Available actions
   - Type specification
 
   ## Examples
@@ -47,7 +47,7 @@ defmodule Mix.Tasks.LiveSchema.Info do
 
     fields = module.__live_schema__(:fields)
     embeds = module.__live_schema__(:embeds)
-    reducers = module.__live_schema__(:reducers)
+    actions = module.__live_schema__(:actions)
 
     Mix.shell().info("""
 
@@ -59,8 +59,8 @@ defmodule Mix.Tasks.LiveSchema.Info do
     #{IO.ANSI.cyan()}Embeds:#{IO.ANSI.reset()}
     #{format_embeds(embeds)}
 
-    #{IO.ANSI.cyan()}Reducers:#{IO.ANSI.reset()}
-    #{format_reducers(reducers)}
+    #{IO.ANSI.cyan()}Actions:#{IO.ANSI.reset()}
+    #{format_actions(actions)}
     """)
   end
 
@@ -93,11 +93,11 @@ defmodule Mix.Tasks.LiveSchema.Info do
     end
   end
 
-  defp format_reducers(reducers) do
-    if Enum.empty?(reducers) do
+  defp format_actions(actions) do
+    if Enum.empty?(actions) do
       "  (none)"
     else
-      reducers
+      actions
       |> Enum.map(&"  #{&1}")
       |> Enum.join("\n")
     end

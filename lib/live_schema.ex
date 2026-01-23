@@ -3,7 +3,7 @@ defmodule LiveSchema do
   A comprehensive state management library for Phoenix LiveView.
 
   LiveSchema provides a DSL for defining typed state structures with automatic
-  setter generation, reducer-based state transitions, and deep Phoenix integration.
+  setter generation, action-based state transitions, and deep Phoenix integration.
 
   ## Quick Start
 
@@ -23,7 +23,7 @@ defmodule LiveSchema do
           end
         end
 
-        reducer :select_post, [:id] do
+        action :select_post, [:id] do
           post = Enum.find(state.posts, &(&1.id == id))
           set_selected(state, post)
         end
@@ -34,7 +34,7 @@ defmodule LiveSchema do
   - **Schema DSL** - Define your state structure declaratively
   - **Type System** - Built-in types with optional runtime validation
   - **Auto-generated Setters** - Reduce boilerplate
-  - **Reducers** - Elm-style state transitions
+  - **Actions** - Elm-style state transitions
   - **Embeds** - Nested state structures
   - **Phoenix Integration** - Works with LiveView and Components
 
@@ -62,16 +62,16 @@ defmodule LiveSchema do
           embeds_many: 3
         ]
 
-      import LiveSchema.Reducer,
-        only: [reducer: 2, reducer: 3, async_reducer: 2, async_reducer: 3]
+      import LiveSchema.Action,
+        only: [action: 2, action: 3, async_action: 2, async_action: 3]
 
-      import LiveSchema.Middleware, only: [before_reduce: 1, after_reduce: 1]
+      import LiveSchema.Middleware, only: [before_action: 1, after_action: 1]
 
       @live_schema_opts unquote(opts)
 
       Module.register_attribute(__MODULE__, :live_schema_fields, accumulate: true)
       Module.register_attribute(__MODULE__, :live_schema_embeds, accumulate: true)
-      Module.register_attribute(__MODULE__, :live_schema_reducers, accumulate: true)
+      Module.register_attribute(__MODULE__, :live_schema_actions, accumulate: true)
       Module.register_attribute(__MODULE__, :live_schema_before_hooks, accumulate: true)
       Module.register_attribute(__MODULE__, :live_schema_after_hooks, accumulate: true)
 

@@ -1,8 +1,8 @@
-defmodule LiveSchema.Reducer do
+defmodule LiveSchema.Action do
   @moduledoc """
-  Macros for defining reducer-based state transitions.
+  Macros for defining action-based state transitions.
 
-  Reducers provide an Elm-style pattern for state management where all
+  Actions provide an Elm-style pattern for state management where all
   state transitions are explicit and go through a central `apply/2` function.
 
   ## Basic Usage
@@ -15,11 +15,11 @@ defmodule LiveSchema.Reducer do
           field :posts, {:list, {:struct, Post}}, default: []
         end
 
-        reducer :increment do
+        action :increment do
           set_count(state, state.count + 1)
         end
 
-        reducer :select_post, [:id] do
+        action :select_post, [:id] do
           post = Enum.find(state.posts, &(&1.id == id))
           set_selected(state, post)
         end
@@ -27,15 +27,15 @@ defmodule LiveSchema.Reducer do
 
   ## With Guards
 
-      reducer :increment, [:amount] when is_integer(amount) and amount > 0 do
+      action :increment, [:amount] when is_integer(amount) and amount > 0 do
         set_count(state, state.count + amount)
       end
 
-  ## Async Reducers
+  ## Async Actions
 
   For operations that need to perform async work:
 
-      async_reducer :load_posts, [:filter] do
+      async_action :load_posts, [:filter] do
         posts = MyApp.Posts.list(filter)
         set_posts(state, posts)
       end
@@ -46,51 +46,51 @@ defmodule LiveSchema.Reducer do
   """
 
   @doc """
-  Defines a synchronous reducer.
+  Defines a synchronous action.
 
-  The reducer body has access to:
+  The action body has access to:
   - `state` - The current state struct
   - Any arguments specified in the args list
 
   ## Examples
 
       # No arguments
-      reducer :reset do
+      action :reset do
         MyApp.State.new()
       end
 
       # With arguments
-      reducer :set_filter, [:field, :value] do
+      action :set_filter, [:field, :value] do
         update_in(state.filter, &Map.put(&1, field, value))
       end
 
       # With guards
-      reducer :add, [:n] when is_integer(n) and n > 0 do
+      action :add, [:n] when is_integer(n) and n > 0 do
         set_count(state, state.count + n)
       end
 
   """
-  defmacro reducer(name, args \\ [], do: block) do
+  defmacro action(name, args \\ [], do: block) do
     {args, guards} = extract_guards(args)
     arg_names = extract_arg_names(args)
 
     quote do
-      @live_schema_reducers {unquote(name), unquote(arg_names), :sync}
+      @live_schema_actions {unquote(name), unquote(arg_names), :sync}
 
-      unquote(generate_reducer_clause(name, arg_names, guards, block))
+      unquote(generate_action_clause(name, arg_names, guards, block))
     end
   end
 
   @doc """
-  Defines an asynchronous reducer.
+  Defines an asynchronous action.
 
-  Async reducers return `{:async, fun}` where `fun` is a zero-arity function
+  Async actions return `{:async, fun}` where `fun` is a zero-arity function
   that performs the async work. This is designed to work with LiveView's
   `start_async/3`.
 
   ## Example
 
-      async_reducer :load_posts, [:filter] do
+      async_action :load_posts, [:filter] do
         posts = MyApp.Posts.list(filter)
         set_posts(state, posts)
       end
@@ -110,31 +110,31 @@ defmodule LiveSchema.Reducer do
 
   Pass options as the third argument before the do block:
 
-      async_reducer :load_posts, [:filter], timeout: 30_000 do
+      async_action :load_posts, [:filter], timeout: 30_000 do
         # ...
       end
 
   """
-  defmacro async_reducer(name, args \\ [], opts_or_block)
+  defmacro async_action(name, args \\ [], opts_or_block)
 
-  defmacro async_reducer(name, args, do: block) do
-    async_reducer_impl(name, args, [], block)
+  defmacro async_action(name, args, do: block) do
+    async_action_impl(name, args, [], block)
   end
 
-  defmacro async_reducer(name, args, opts) when is_list(opts) do
+  defmacro async_action(name, args, opts) when is_list(opts) do
     {block, opts} = Keyword.pop(opts, :do)
-    async_reducer_impl(name, args, opts, block)
+    async_action_impl(name, args, opts, block)
   end
 
-  defp async_reducer_impl(name, args, opts, block) do
+  defp async_action_impl(name, args, opts, block) do
     {args, guards} = extract_guards(args)
     arg_names = extract_arg_names(args)
     _timeout = Keyword.get(opts, :timeout, 30_000)
 
     quote do
-      @live_schema_reducers {unquote(name), unquote(arg_names), :async}
+      @live_schema_actions {unquote(name), unquote(arg_names), :async}
 
-      unquote(generate_async_reducer_clause(name, arg_names, guards, block))
+      unquote(generate_async_action_clause(name, arg_names, guards, block))
     end
   end
 
@@ -146,8 +146,8 @@ defmodule LiveSchema.Reducer do
   defp extract_arg_names(args) when is_list(args), do: args
   defp extract_arg_names(_), do: []
 
-  # Generate the apply_reducer clause for a sync reducer
-  defp generate_reducer_clause(name, arg_names, guards, block) do
+  # Generate the apply_action clause for a sync action
+  defp generate_action_clause(name, arg_names, guards, block) do
     pattern = build_action_pattern(name, arg_names)
 
     body =
@@ -159,21 +159,21 @@ defmodule LiveSchema.Reducer do
 
     if guards do
       quote do
-        defp apply_reducer(state, unquote(pattern)) when unquote(guards) do
+        defp apply_action(state, unquote(pattern)) when unquote(guards) do
           unquote(body)
         end
       end
     else
       quote do
-        defp apply_reducer(state, unquote(pattern)) do
+        defp apply_action(state, unquote(pattern)) do
           unquote(body)
         end
       end
     end
   end
 
-  # Generate the apply_reducer clause for an async reducer
-  defp generate_async_reducer_clause(name, arg_names, guards, block) do
+  # Generate the apply_action clause for an async action
+  defp generate_async_action_clause(name, arg_names, guards, block) do
     pattern = build_action_pattern(name, arg_names)
 
     body =
@@ -192,13 +192,13 @@ defmodule LiveSchema.Reducer do
 
     if guards do
       quote do
-        defp apply_reducer(state, unquote(pattern)) when unquote(guards) do
+        defp apply_action(state, unquote(pattern)) when unquote(guards) do
           unquote(body)
         end
       end
     else
       quote do
-        defp apply_reducer(state, unquote(pattern)) do
+        defp apply_action(state, unquote(pattern)) do
           unquote(body)
         end
       end
@@ -231,7 +231,7 @@ defmodule LiveSchema.Reducer do
     quote do: (unquote_splicing(bindings))
   end
 
-  # Capture args for async reducer closure
+  # Capture args for async action closure
   defp capture_args([]), do: nil
 
   defp capture_args(arg_names) do

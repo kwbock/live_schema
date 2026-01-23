@@ -18,7 +18,7 @@ defmodule LiveSchema.View do
             field :loading, :boolean, default: false
           end
 
-          reducer :load_posts do
+          action :load_posts do
             set_loading(state, true)
           end
         end
@@ -56,7 +56,7 @@ defmodule LiveSchema.View do
             field :expanded, :boolean, default: true
           end
 
-          reducer :toggle do
+          action :toggle do
             set_expanded(state, !state.expanded)
           end
         end
@@ -80,8 +80,8 @@ defmodule LiveSchema.View do
   - `init_state/1` - Initialize default `:state` with `Schema.new()`
   - `init_state/2` - Initialize with assign key or custom attributes
   - `init_state/3` - Initialize specific assign with custom attributes
-  - `apply_action/2` - Apply a reducer action to default `:state`
-  - `apply_action/3` - Apply a reducer action to specific assign
+  - `apply_action/2` - Apply an action to default `:state`
+  - `apply_action/3` - Apply an action to specific assign
   - `update_state/2` - Update default `:state` with a function
   - `update_state/3` - Update specific assign with a function
 
@@ -219,7 +219,7 @@ defmodule LiveSchema.View do
   end
 
   @doc """
-  Applies a reducer action to the default `:state` assign.
+  Applies an action to the default `:state` assign.
 
   Updates the `@state` assign with the result.
 
@@ -239,7 +239,7 @@ defmodule LiveSchema.View do
 
       # Emit telemetry
       :telemetry.execute(
-        [:live_schema, :reducer, :applied],
+        [:live_schema, :action, :applied],
         %{},
         %{
           schema: schema,
@@ -254,7 +254,7 @@ defmodule LiveSchema.View do
   end
 
   @doc """
-  Applies a reducer action to a specific assign.
+  Applies an action to a specific assign.
 
   ## Examples
 
@@ -280,7 +280,7 @@ defmodule LiveSchema.View do
 
       # Emit telemetry
       :telemetry.execute(
-        [:live_schema, :reducer, :applied],
+        [:live_schema, :action, :applied],
         %{},
         %{
           schema: schema,

@@ -20,17 +20,17 @@ defmodule LiveSchema.MiddlewareTest do
     Agent.get(:hook_tracker, & &1)
   end
 
-  # Schema with before_reduce hook
+  # Schema with before_action hook
   defmodule BeforeHookSchema do
     use LiveSchema
 
-    before_reduce :on_before
+    before_action :on_before
 
     schema do
       field :count, :integer, default: 0
     end
 
-    reducer :increment do
+    action :increment do
       set_count(state, state.count + 1)
     end
 
@@ -41,17 +41,17 @@ defmodule LiveSchema.MiddlewareTest do
     end
   end
 
-  # Schema with after_reduce hook
+  # Schema with after_action hook
   defmodule AfterHookSchema do
     use LiveSchema
 
-    after_reduce :on_after
+    after_action :on_after
 
     schema do
       field :count, :integer, default: 0
     end
 
-    reducer :increment do
+    action :increment do
       set_count(state, state.count + 1)
     end
 
@@ -66,14 +66,14 @@ defmodule LiveSchema.MiddlewareTest do
   defmodule BothHooksSchema do
     use LiveSchema
 
-    before_reduce :on_before
-    after_reduce :on_after
+    before_action :on_before
+    after_action :on_after
 
     schema do
       field :value, :string, default: ""
     end
 
-    reducer :set_value, [:new_value] do
+    action :set_value, [:new_value] do
       set_value(state, new_value)
     end
 
@@ -94,16 +94,16 @@ defmodule LiveSchema.MiddlewareTest do
   defmodule MultipleHooksSchema do
     use LiveSchema
 
-    before_reduce :before_first
-    before_reduce :before_second
-    after_reduce :after_first
-    after_reduce :after_second
+    before_action :before_first
+    before_action :before_second
+    after_action :after_first
+    after_action :after_second
 
     schema do
       field :count, :integer, default: 0
     end
 
-    reducer :increment do
+    action :increment do
       set_count(state, state.count + 1)
     end
 
@@ -132,13 +132,13 @@ defmodule LiveSchema.MiddlewareTest do
       field :count, :integer, default: 0
     end
 
-    reducer :increment do
+    action :increment do
       set_count(state, state.count + 1)
     end
   end
 
-  describe "before_reduce/1" do
-    test "hook is called before reducer executes" do
+  describe "before_action/1" do
+    test "hook is called before action executes" do
       state = BeforeHookSchema.new!()
 
       # Apply the action
@@ -149,7 +149,7 @@ defmodule LiveSchema.MiddlewareTest do
       assert length(calls) == 1
       assert [{:before, 0, {:increment}}] = calls
 
-      # Verify reducer still worked
+      # Verify action still worked
       assert new_state.count == 1
     end
 
@@ -180,8 +180,8 @@ defmodule LiveSchema.MiddlewareTest do
     end
   end
 
-  describe "after_reduce/1" do
-    test "hook is called after reducer executes" do
+  describe "after_action/1" do
+    test "hook is called after action executes" do
       state = AfterHookSchema.new!()
 
       new_state = AfterHookSchema.apply(state, {:increment})
@@ -288,7 +288,7 @@ defmodule LiveSchema.MiddlewareTest do
       assert after_calls == [:after_first, :after_second]
     end
 
-    test "all hooks execute: before hooks, reducer, then after hooks" do
+    test "all hooks execute: before hooks, action, then after hooks" do
       state = MultipleHooksSchema.new!()
 
       MultipleHooksSchema.apply(state, {:increment})
@@ -312,22 +312,22 @@ defmodule LiveSchema.MiddlewareTest do
   end
 
   describe "hooks with different actions" do
-    test "hooks are called for all reducer actions" do
+    test "hooks are called for all actions" do
       defmodule MultiActionSchema do
         use LiveSchema
 
-        before_reduce :track_action
+        before_action :track_action
 
         schema do
           field :count, :integer, default: 0
           field :name, :string, default: ""
         end
 
-        reducer :increment do
+        action :increment do
           set_count(state, state.count + 1)
         end
 
-        reducer :set_name, [:new_name] do
+        action :set_name, [:new_name] do
           set_name(state, new_name)
         end
 
@@ -359,13 +359,13 @@ defmodule LiveSchema.MiddlewareTest do
       defmodule SideEffectSchema do
         use LiveSchema
 
-        after_reduce :send_message
+        after_action :send_message
 
         schema do
           field :count, :integer, default: 0
         end
 
-        reducer :increment do
+        action :increment do
           set_count(state, state.count + 1)
         end
 
@@ -386,8 +386,8 @@ defmodule LiveSchema.MiddlewareTest do
       fields = MultipleHooksSchema.__live_schema__(:fields)
       assert :count in fields
 
-      reducers = MultipleHooksSchema.__live_schema__(:reducers)
-      assert :increment in reducers
+      actions = MultipleHooksSchema.__live_schema__(:actions)
+      assert :increment in actions
     end
   end
 end
