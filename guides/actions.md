@@ -1,8 +1,8 @@
-# Reducers Guide
+# Actions Guide
 
-Reducers provide an Elm-style pattern for state transitions. All complex state changes go through a central `apply/2` function.
+Actions provide an Elm-style pattern for state transitions. All complex state changes go through a central `apply/2` function.
 
-## Basic Reducers
+## Basic Actions
 
 ```elixir
 defmodule MyApp.CounterState do
@@ -12,15 +12,15 @@ defmodule MyApp.CounterState do
     field :count, :integer, default: 0
   end
 
-  reducer :increment do
+  action :increment do
     set_count(state, state.count + 1)
   end
 
-  reducer :decrement do
+  action :decrement do
     set_count(state, state.count - 1)
   end
 
-  reducer :reset do
+  action :reset do
     set_count(state, 0)
   end
 end
@@ -36,14 +36,14 @@ state = CounterState.apply(state, {:decrement})  # count: 1
 state = CounterState.apply(state, {:reset})      # count: 0
 ```
 
-## Reducers with Arguments
+## Actions with Arguments
 
 ```elixir
-reducer :increment_by, [:amount] do
+action :increment_by, [:amount] do
   set_count(state, state.count + amount)
 end
 
-reducer :select_post, [:id] do
+action :select_post, [:id] do
   post = Enum.find(state.posts, &(&1.id == id))
   set_selected(state, post)
 end
@@ -59,11 +59,11 @@ PostsState.apply(state, {:select_post, 42})
 ## Guards and Pattern Matching
 
 ```elixir
-reducer :increment_by, [:amount] when is_integer(amount) and amount > 0 do
+action :increment_by, [:amount] when is_integer(amount) and amount > 0 do
   set_count(state, state.count + amount)
 end
 
-reducer :set_status, [:status] when status in [:pending, :active, :done] do
+action :set_status, [:status] when status in [:pending, :active, :done] do
   set_status(state, status)
 end
 ```
@@ -81,26 +81,26 @@ CounterState.apply(state, {:increment_by, -1})
 Reducers can update multiple fields at once:
 
 ```elixir
-reducer :load_posts_success, [:posts] do
+action :load_posts_success, [:posts] do
   state
   |> set_posts(posts)
   |> set_loading(false)
   |> set_error(nil)
 end
 
-reducer :apply_filter, [:filter_params] do
+action :apply_filter, [:filter_params] do
   state
   |> set_filter(struct(state.filter, filter_params))
   |> set_pagination(%{state.pagination | page: 1})
 end
 ```
 
-## Async Reducers
+## Async Actions
 
 For operations that need to perform async work:
 
 ```elixir
-async_reducer :load_posts, [:filter] do
+async_action :load_posts, [:filter] do
   # This code runs in a separate process
   posts = MyApp.Posts.list(filter)
   set_posts(state, posts)
@@ -139,14 +139,14 @@ defmodule MyApp.PostsState do
   use LiveSchema
   require Logger
 
-  before_reduce :log_action
-  after_reduce :emit_telemetry
+  before_action :log_action
+  after_action :emit_telemetry
 
   schema do
     field :posts, {:list, :any}, default: []
   end
 
-  reducer :add_post, [:post] do
+  action :add_post, [:post] do
     set_posts(state, [post | state.posts])
   end
 
@@ -168,19 +168,19 @@ end
 
 ## Best Practices
 
-### 1. Keep Reducers Pure
+### 1. Keep Actions Pure
 
-Reducers should be pure functions - avoid side effects:
+Actions should be pure functions - avoid side effects:
 
 ```elixir
 # Good - pure function
-reducer :select_post, [:id] do
+action :select_post, [:id] do
   post = Enum.find(state.posts, &(&1.id == id))
   set_selected(state, post)
 end
 
-# Bad - side effect in reducer
-reducer :select_post, [:id] do
+# Bad - side effect in action
+action :select_post, [:id] do
   post = Enum.find(state.posts, &(&1.id == id))
   Logger.info("Selected post #{id}")  # Don't do this!
   set_selected(state, post)
@@ -193,22 +193,22 @@ Use hooks for side effects instead.
 
 ```elixir
 # Good
-reducer :mark_post_as_read, [:id] do ...
-reducer :apply_search_filter, [:query] do ...
+action :mark_post_as_read, [:id] do ...
+action :apply_search_filter, [:query] do ...
 
 # Less clear
-reducer :update, [:field, :value] do ...
-reducer :do_action, [:data] do ...
+action :update, [:field, :value] do ...
+action :do_action, [:data] do ...
 ```
 
-### 3. Compose Small Reducers
+### 3. Compose Small Actions
 
 ```elixir
-reducer :load_complete, [:posts, :total_pages] do
+action :load_complete, [:posts, :total_pages] do
   state
-  |> apply_reducer({:set_posts, posts})
-  |> apply_reducer({:set_loading, false})
-  |> apply_reducer({:set_total_pages, total_pages})
+  |> apply_action({:set_posts, posts})
+  |> apply_action({:set_loading, false})
+  |> apply_action({:set_total_pages, total_pages})
 end
 ```
 
@@ -217,18 +217,18 @@ end
 Consider all possible state transitions:
 
 ```elixir
-reducer :fetch_posts do
+action :fetch_posts do
   set_loading(state, true)
 end
 
-reducer :fetch_posts_success, [:posts] do
+action :fetch_posts_success, [:posts] do
   state
   |> set_posts(posts)
   |> set_loading(false)
   |> set_error(nil)
 end
 
-reducer :fetch_posts_error, [:reason] do
+action :fetch_posts_error, [:reason] do
   state
   |> set_loading(false)
   |> set_error(reason)

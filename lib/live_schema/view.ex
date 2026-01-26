@@ -4,13 +4,12 @@ defmodule LiveSchema.View do
 
   Provides helpers for using LiveSchema state in LiveView modules.
 
-  ## Usage
+  ## Single Schema Usage
 
       defmodule MyAppWeb.PostsLive do
         use MyAppWeb, :live_view
         use LiveSchema.View, schema: __MODULE__.State
 
-        # State struct is defined in a nested module
         defmodule State do
           use LiveSchema
 
@@ -19,12 +18,11 @@ defmodule LiveSchema.View do
             field :loading, :boolean, default: false
           end
 
-          reducer :load_posts do
+          action :load_posts do
             set_loading(state, true)
           end
         end
 
-        # The @state assign is automatically available
         def mount(_params, _session, socket) do
           {:ok, init_state(socket)}
         end
@@ -34,31 +32,169 @@ defmodule LiveSchema.View do
         end
       end
 
+  ## Multiple Schema Usage
+
+  You can register multiple schemas with different assign keys:
+
+      defmodule MyAppWeb.DashboardLive do
+        use MyAppWeb, :live_view
+        use LiveSchema.View, schemas: [
+          state: __MODULE__.MainState,
+          sidebar: __MODULE__.SidebarState
+        ]
+
+        defmodule MainState do
+          use LiveSchema
+          schema do
+            field :data, {:list, :map}, default: []
+          end
+        end
+
+        defmodule SidebarState do
+          use LiveSchema
+          schema do
+            field :expanded, :boolean, default: true
+          end
+
+          action :toggle do
+            set_expanded(state, !state.expanded)
+          end
+        end
+
+        def mount(_params, _session, socket) do
+          socket =
+            socket
+            |> init_state(:state)
+            |> init_state(:sidebar)
+
+          {:ok, socket}
+        end
+
+        def handle_event("toggle_sidebar", _, socket) do
+          {:noreply, apply_action(socket, :sidebar, {:toggle})}
+        end
+      end
+
+  ## Auto-Generated Event Handlers
+
+  Use `generate_events: true` to automatically generate `handle_event/3` callbacks
+  for all schema actions. Events are named `"ModuleName:action_name"`:
+
+      defmodule MyAppWeb.PostsLive do
+        use MyAppWeb, :live_view
+        use LiveSchema.View, schema: __MODULE__.State, generate_events: true
+
+        defmodule State do
+          use LiveSchema
+
+          schema do
+            field :count, :integer, default: 0
+            field :selected_id, :integer, null: true
+          end
+
+          action :increment do
+            set_count(state, state.count + 1)
+          end
+
+          # Typed arguments are coerced from strings
+          action :select_post, [id: :integer] do
+            set_selected_id(state, id)
+          end
+
+          async_action :load_posts, [filter: :atom] do
+            posts = Repo.all(Post.filter(filter))
+            set_posts(state, posts)
+          end
+        end
+      end
+
+  Template usage:
+
+      <button phx-click="State:increment">+1</button>
+      <button phx-click="State:select_post" phx-value-id={post.id}>Select</button>
+
+  Supported argument types for automatic coercion:
+  - `:integer` - String to integer
+  - `:float` - String to float
+  - `:boolean` - "true"/"false" to boolean
+  - `:atom` - String to existing atom
+  - `:string` - Ensure string output
+  - `nil` or untyped - Passthrough (no coercion)
+
+  User-defined `handle_event` clauses take precedence over generated ones
+  when they have more specific patterns.
+
   ## Helpers Provided
 
-  - `init_state/1` - Initialize `@state` with `Schema.new()`
-  - `init_state/2` - Initialize with custom attributes
-  - `apply_action/2` - Apply a reducer action to state
-  - `update_state/2` - Update state with a function
+  - `init_state/1` - Initialize default `:state` with `Schema.new()`
+  - `init_state/2` - Initialize with assign key or custom attributes
+  - `init_state/3` - Initialize specific assign with custom attributes
+  - `apply_action/2` - Apply an action to default `:state`
+  - `apply_action/3` - Apply an action to specific assign
+  - `update_state/2` - Update default `:state` with a function
+  - `update_state/3` - Update specific assign with a function
 
   """
 
   @doc false
   defmacro __using__(opts) do
-    schema = Keyword.fetch!(opts, :schema)
+    schemas =
+      cond do
+        Keyword.has_key?(opts, :schemas) ->
+          Keyword.fetch!(opts, :schemas)
+
+        Keyword.has_key?(opts, :schema) ->
+          [state: Keyword.fetch!(opts, :schema)]
+
+        true ->
+          raise ArgumentError, "LiveSchema.View requires either :schema or :schemas option"
+      end
+
+    generate_events = Keyword.get(opts, :generate_events, false)
+
+    # Build a list of {key, module} pairs that can be properly unquoted
+    schemas_pairs =
+      Enum.map(schemas, fn {key, mod} ->
+        {key, mod}
+      end)
+
+    before_compile =
+      if generate_events do
+        quote do
+          @before_compile LiveSchema.View.EventGenerator
+        end
+      else
+        quote do
+        end
+      end
 
     quote do
-      @live_schema_module unquote(schema)
+      @live_schemas Map.new(unquote(schemas_pairs))
 
-      import LiveSchema.View, only: [init_state: 1, init_state: 2, apply_action: 2, update_state: 2]
+      import LiveSchema.View,
+        only: [
+          init_state: 1,
+          init_state: 2,
+          init_state: 3,
+          apply_action: 2,
+          apply_action: 3,
+          update_state: 2,
+          update_state: 3
+        ]
+
+      unquote(before_compile)
 
       @doc false
-      def __live_schema__, do: @live_schema_module
+      def __live_schemas__, do: @live_schemas
+
+      # Backwards compatibility
+      @doc false
+      def __live_schema__, do: @live_schemas[:state]
     end
   end
 
   @doc """
-  Initializes the state assign on the socket.
+  Initializes the default `:state` assign on the socket.
 
   ## Examples
 
@@ -69,30 +205,84 @@ defmodule LiveSchema.View do
   """
   defmacro init_state(socket) do
     quote do
-      schema = @live_schema_module
+      schema = @live_schemas[:state]
       Phoenix.Component.assign(unquote(socket), :state, schema.new())
     end
   end
 
   @doc """
-  Initializes the state assign with custom attributes.
+  Initializes a state assign on the socket.
+
+  When passed an atom, initializes the corresponding schema at that assign key.
+  When passed a keyword list, initializes the default `:state` with those attributes.
 
   ## Examples
 
+      # Initialize a specific assign
+      def mount(_params, _session, socket) do
+        socket =
+          socket
+          |> init_state(:state)
+          |> init_state(:sidebar)
+
+        {:ok, socket}
+      end
+
+      # Initialize default :state with attributes (backwards compatible)
       def mount(_params, session, socket) do
         {:ok, init_state(socket, user: session["user"])}
       end
 
   """
+  defmacro init_state(socket, assign_key_or_attrs)
+
+  defmacro init_state(socket, assign_key) when is_atom(assign_key) do
+    quote do
+      schema = @live_schemas[unquote(assign_key)]
+
+      if is_nil(schema) do
+        raise ArgumentError,
+              "No schema registered for assign key #{inspect(unquote(assign_key))}. " <>
+                "Available keys: #{inspect(Map.keys(@live_schemas))}"
+      end
+
+      Phoenix.Component.assign(unquote(socket), unquote(assign_key), schema.new())
+    end
+  end
+
   defmacro init_state(socket, attrs) do
     quote do
-      schema = @live_schema_module
+      schema = @live_schemas[:state]
       Phoenix.Component.assign(unquote(socket), :state, schema.new!(unquote(attrs)))
     end
   end
 
   @doc """
-  Applies a reducer action to the state.
+  Initializes a specific assign with custom attributes.
+
+  ## Examples
+
+      def mount(_params, session, socket) do
+        {:ok, init_state(socket, :sidebar, expanded: false)}
+      end
+
+  """
+  defmacro init_state(socket, assign_key, attrs) when is_atom(assign_key) do
+    quote do
+      schema = @live_schemas[unquote(assign_key)]
+
+      if is_nil(schema) do
+        raise ArgumentError,
+              "No schema registered for assign key #{inspect(unquote(assign_key))}. " <>
+                "Available keys: #{inspect(Map.keys(@live_schemas))}"
+      end
+
+      Phoenix.Component.assign(unquote(socket), unquote(assign_key), schema.new!(unquote(attrs)))
+    end
+  end
+
+  @doc """
+  Applies an action to the default `:state` assign.
 
   Updates the `@state` assign with the result.
 
@@ -106,17 +296,18 @@ defmodule LiveSchema.View do
   defmacro apply_action(socket, action) do
     quote do
       socket = unquote(socket)
-      schema = @live_schema_module
+      schema = @live_schemas[:state]
       current_state = socket.assigns.state
       new_state = schema.apply(current_state, unquote(action))
 
       # Emit telemetry
       :telemetry.execute(
-        [:live_schema, :reducer, :applied],
+        [:live_schema, :action, :applied],
         %{},
         %{
           schema: schema,
           action: elem(unquote(action), 0),
+          assign_key: :state,
           socket_id: socket.id
         }
       )
@@ -126,7 +317,48 @@ defmodule LiveSchema.View do
   end
 
   @doc """
-  Updates the state using a function.
+  Applies an action to a specific assign.
+
+  ## Examples
+
+      def handle_event("toggle_sidebar", _, socket) do
+        {:noreply, apply_action(socket, :sidebar, {:toggle})}
+      end
+
+  """
+  defmacro apply_action(socket, assign_key, action) when is_atom(assign_key) do
+    quote do
+      socket = unquote(socket)
+      assign_key = unquote(assign_key)
+      schema = @live_schemas[assign_key]
+
+      if is_nil(schema) do
+        raise ArgumentError,
+              "No schema registered for assign key #{inspect(assign_key)}. " <>
+                "Available keys: #{inspect(Map.keys(@live_schemas))}"
+      end
+
+      current_state = Map.fetch!(socket.assigns, assign_key)
+      new_state = schema.apply(current_state, unquote(action))
+
+      # Emit telemetry
+      :telemetry.execute(
+        [:live_schema, :action, :applied],
+        %{},
+        %{
+          schema: schema,
+          action: elem(unquote(action), 0),
+          assign_key: assign_key,
+          socket_id: socket.id
+        }
+      )
+
+      Phoenix.Component.assign(socket, assign_key, new_state)
+    end
+  end
+
+  @doc """
+  Updates the default `:state` assign using a function.
 
   ## Examples
 
@@ -143,6 +375,28 @@ defmodule LiveSchema.View do
       current_state = socket.assigns.state
       new_state = unquote(fun).(current_state)
       Phoenix.Component.assign(socket, :state, new_state)
+    end
+  end
+
+  @doc """
+  Updates a specific assign using a function.
+
+  ## Examples
+
+      def handle_info(:collapse_sidebar, socket) do
+        {:noreply, update_state(socket, :sidebar, fn state ->
+          SidebarState.set_expanded(state, false)
+        end)}
+      end
+
+  """
+  defmacro update_state(socket, assign_key, fun) when is_atom(assign_key) do
+    quote do
+      socket = unquote(socket)
+      assign_key = unquote(assign_key)
+      current_state = Map.fetch!(socket.assigns, assign_key)
+      new_state = unquote(fun).(current_state)
+      Phoenix.Component.assign(socket, assign_key, new_state)
     end
   end
 end

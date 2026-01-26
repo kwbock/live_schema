@@ -18,7 +18,7 @@ defmodule LiveSchema.EmbedsTest do
       end
     end
 
-    reducer :set_filter_status, [:status] do
+    action :set_filter_status, [:status] do
       set_filter(state, %{state.filter | status: status})
     end
   end

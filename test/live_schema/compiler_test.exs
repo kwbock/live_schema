@@ -88,8 +88,8 @@ defmodule LiveSchema.CompilerTest do
     end
   end
 
-  # Test schema with reducers
-  defmodule ReducerSchema do
+  # Test schema with actions
+  defmodule ActionSchema do
     use LiveSchema
 
     schema do
@@ -97,15 +97,15 @@ defmodule LiveSchema.CompilerTest do
       field :name, :string, default: ""
     end
 
-    reducer :increment do
+    action :increment do
       set_count(state, state.count + 1)
     end
 
-    reducer :decrement do
+    action :decrement do
       set_count(state, state.count - 1)
     end
 
-    reducer :set_name, [:new_name] do
+    action :set_name, [:new_name] do
       set_name(state, new_name)
     end
   end
@@ -363,16 +363,16 @@ defmodule LiveSchema.CompilerTest do
       assert :items in embeds
     end
 
-    test "returns list of reducer names" do
-      reducers = ReducerSchema.__live_schema__(:reducers)
-      assert :increment in reducers
-      assert :decrement in reducers
-      assert :set_name in reducers
+    test "returns list of action names" do
+      actions = ActionSchema.__live_schema__(:actions)
+      assert :increment in actions
+      assert :decrement in actions
+      assert :set_name in actions
     end
 
-    test "returns empty list for schema without reducers" do
-      reducers = BasicSchema.__live_schema__(:reducers)
-      assert reducers == []
+    test "returns empty list for schema without actions" do
+      actions = BasicSchema.__live_schema__(:actions)
+      assert actions == []
     end
   end
 
@@ -405,30 +405,30 @@ defmodule LiveSchema.CompilerTest do
   end
 
   describe "apply dispatcher" do
-    test "routes to correct reducer" do
-      state = ReducerSchema.new!()
-      state = ReducerSchema.apply(state, {:increment})
+    test "routes to correct action" do
+      state = ActionSchema.new!()
+      state = ActionSchema.apply(state, {:increment})
       assert state.count == 1
 
-      state = ReducerSchema.apply(state, {:decrement})
+      state = ActionSchema.apply(state, {:decrement})
       assert state.count == 0
     end
 
-    test "passes arguments to reducer" do
-      state = ReducerSchema.new!()
-      state = ReducerSchema.apply(state, {:set_name, "new_name"})
+    test "passes arguments to action" do
+      state = ActionSchema.new!()
+      state = ActionSchema.apply(state, {:set_name, "new_name"})
       assert state.name == "new_name"
     end
 
     test "raises ActionError for unknown action" do
-      state = ReducerSchema.new!()
+      state = ActionSchema.new!()
 
       assert_raise LiveSchema.ActionError, fn ->
-        ReducerSchema.apply(state, {:unknown_action})
+        ActionSchema.apply(state, {:unknown_action})
       end
     end
 
-    test "raises ActionError for schema without reducers" do
+    test "raises ActionError for schema without actions" do
       state = BasicSchema.new!()
 
       assert_raise LiveSchema.ActionError, fn ->

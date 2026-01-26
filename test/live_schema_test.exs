@@ -13,19 +13,19 @@ defmodule LiveSchemaTest do
       field :metadata, :map, null: true
     end
 
-    reducer :increment do
+    action :increment do
       set_count(state, state.count + 1)
     end
 
-    reducer :increment_by, [:amount] when is_integer(amount) and amount > 0 do
+    action :increment_by, [:amount] when is_integer(amount) and amount > 0 do
       set_count(state, state.count + amount)
     end
 
-    reducer :set_name, [:name] do
+    action :set_name, [:name] do
       set_name(state, name)
     end
 
-    reducer :toggle_active do
+    action :toggle_active do
       set_active(state, !state.active)
     end
   end
@@ -130,11 +130,11 @@ defmodule LiveSchemaTest do
       assert info.default == 0
     end
 
-    test "returns reducer list" do
-      reducers = TestState.__live_schema__(:reducers)
+    test "returns action list" do
+      actions = TestState.__live_schema__(:actions)
 
-      assert :increment in reducers
-      assert :increment_by in reducers
+      assert :increment in actions
+      assert :increment_by in actions
     end
   end
 end

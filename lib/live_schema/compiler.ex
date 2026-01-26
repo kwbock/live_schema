@@ -6,7 +6,7 @@ defmodule LiveSchema.Compiler do
   defmacro __before_compile__(env) do
     fields = Module.get_attribute(env.module, :live_schema_fields) |> Enum.reverse()
     embeds = Module.get_attribute(env.module, :live_schema_embeds) |> Enum.reverse()
-    reducers = Module.get_attribute(env.module, :live_schema_reducers) |> Enum.reverse()
+    actions = Module.get_attribute(env.module, :live_schema_actions) |> Enum.reverse()
     before_hooks = Module.get_attribute(env.module, :live_schema_before_hooks) |> Enum.reverse()
     after_hooks = Module.get_attribute(env.module, :live_schema_after_hooks) |> Enum.reverse()
 
@@ -29,10 +29,10 @@ defmodule LiveSchema.Compiler do
     constructors = generate_constructors(all_fields, env.module)
 
     # Generate introspection functions
-    introspection = generate_introspection(all_fields, embeds, reducers, env.module)
+    introspection = generate_introspection(all_fields, embeds, actions, env.module)
 
     # Generate apply/2 dispatcher
-    apply_dispatcher = generate_apply_dispatcher(reducers, before_hooks, after_hooks, env.module)
+    apply_dispatcher = generate_apply_dispatcher(actions, before_hooks, after_hooks, env.module)
 
     # Generate Inspect implementation
     inspect_impl = generate_inspect_impl(all_fields, env.module)
@@ -327,10 +327,10 @@ defmodule LiveSchema.Compiler do
   end
 
   # Generate introspection functions
-  defp generate_introspection(fields, embeds, reducers, _module) do
+  defp generate_introspection(fields, embeds, actions, _module) do
     field_names = Enum.map(fields, & &1.name)
     embed_names = Enum.map(embeds, &elem(&1, 0))
-    reducer_names = Enum.map(reducers, &elem(&1, 0))
+    action_names = Enum.map(actions, &elem(&1, 0))
 
     field_info =
       Enum.map(fields, fn field ->
@@ -346,6 +346,10 @@ defmodule LiveSchema.Compiler do
          }}
       end)
 
+    # Convert actions to the format expected by EventGenerator
+    # Each action is {name, [{arg_name, arg_type}, ...], :sync | :async}
+    actions_data = Macro.escape(actions)
+
     [
       quote do
         @doc """
@@ -356,14 +360,14 @@ defmodule LiveSchema.Compiler do
         - `:fields` - List of field names
         - `{:field, name}` - Info about a specific field
         - `:embeds` - List of embed names
-        - `:reducers` - List of reducer action names
+        - `:actions` - List of action names
         - `:type` - The full type specification
 
         """
         @spec __live_schema__(atom() | {:field, atom()}) :: any()
         def __live_schema__(:fields), do: unquote(field_names)
         def __live_schema__(:embeds), do: unquote(embed_names)
-        def __live_schema__(:reducers), do: unquote(reducer_names)
+        def __live_schema__(:actions), do: unquote(action_names)
 
         def __live_schema__({:field, name}) do
           unquote(Macro.escape(Map.new(field_info)))[name]
@@ -374,18 +378,37 @@ defmodule LiveSchema.Compiler do
             %unquote(__MODULE__){}
           end
         end
+
+        @doc """
+        Returns detailed information about all actions.
+
+        Returns a list of tuples: `{action_name, [{arg_name, arg_type}, ...], :sync | :async | :reply}`
+
+        ## Examples
+
+            iex> MyState.__actions__()
+            [
+              {:increment, [], :sync},
+              {:select_post, [{:id, :integer}], :sync},
+              {:load_posts, [{:filter, :atom}], :async},
+              {:get_count, [], :reply}
+            ]
+
+        """
+        @spec __actions__() :: [{atom(), [{atom(), atom() | nil}], :sync | :async | :reply}]
+        def __actions__, do: unquote(actions_data)
       end
     ]
   end
 
   # Generate apply/2 dispatcher
-  defp generate_apply_dispatcher(reducers, before_hooks, after_hooks, module) do
-    if Enum.empty?(reducers) do
+  defp generate_apply_dispatcher(actions, before_hooks, after_hooks, module) do
+    if Enum.empty?(actions) do
       quote do
         @doc """
-        Applies an action to the state using the matching reducer.
+        Applies an action to the state using the matching action handler.
 
-        No reducers are defined for this schema.
+        No actions are defined for this schema.
         """
         @spec apply(t(), tuple()) :: t()
         def apply(_state, action) do
@@ -396,13 +419,13 @@ defmodule LiveSchema.Compiler do
         end
       end
     else
-      reducer_names = Enum.map(reducers, &elem(&1, 0))
+      action_names = Enum.map(actions, &elem(&1, 0))
 
       quote do
         @doc """
-        Applies an action to the state using the matching reducer.
+        Applies an action to the state using the matching action handler.
 
-        Available actions: #{inspect(unquote(reducer_names))}
+        Available actions: #{inspect(unquote(action_names))}
         """
         @spec apply(t(), tuple()) :: t()
         def apply(state, action) do
@@ -413,8 +436,8 @@ defmodule LiveSchema.Compiler do
             apply(__MODULE__, hook, [state, action])
           end)
 
-          # Apply the reducer
-          new_state = apply_reducer(state, action)
+          # Apply the action
+          new_state = apply_action(state, action)
 
           # Run after hooks
           Enum.each(unquote(after_hooks), fn hook ->
@@ -424,12 +447,12 @@ defmodule LiveSchema.Compiler do
           new_state
         end
 
-        defp apply_reducer(_state, action) do
+        defp apply_action(_state, action) do
           action_name = elem(action, 0)
 
           raise LiveSchema.ActionError,
             action: action_name,
-            available_actions: unquote(reducer_names),
+            available_actions: unquote(action_names),
             schema: unquote(module)
         end
       end

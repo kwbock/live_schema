@@ -7,9 +7,9 @@ defmodule LiveSchema.Telemetry do
 
   ## Events
 
-  ### `[:live_schema, :reducer, :start]`
+  ### `[:live_schema, :action, :start]`
 
-  Emitted before a reducer is executed.
+  Emitted before an action is executed.
 
   **Measurements:** `%{system_time: integer()}`
 
@@ -18,9 +18,9 @@ defmodule LiveSchema.Telemetry do
   - `:action` - The action name (atom)
   - `:action_args` - The action arguments
 
-  ### `[:live_schema, :reducer, :stop]`
+  ### `[:live_schema, :action, :stop]`
 
-  Emitted after a reducer completes successfully.
+  Emitted after an action completes successfully.
 
   **Measurements:** `%{duration: integer()}`
 
@@ -29,9 +29,9 @@ defmodule LiveSchema.Telemetry do
   - `:action` - The action name
   - `:action_args` - The action arguments
 
-  ### `[:live_schema, :reducer, :exception]`
+  ### `[:live_schema, :action, :exception]`
 
-  Emitted when a reducer raises an exception.
+  Emitted when an action raises an exception.
 
   **Measurements:** `%{duration: integer()}`
 
@@ -64,9 +64,9 @@ defmodule LiveSchema.Telemetry do
   Or attach custom handlers:
 
       :telemetry.attach(
-        "my-reducer-handler",
-        [:live_schema, :reducer, :stop],
-        &MyApp.Telemetry.handle_reducer/4,
+        "my-action-handler",
+        [:live_schema, :action, :stop],
+        &MyApp.Telemetry.handle_action/4,
         nil
       )
 
@@ -81,9 +81,9 @@ defmodule LiveSchema.Telemetry do
   @spec attach_default_handlers() :: :ok
   def attach_default_handlers do
     events = [
-      [:live_schema, :reducer, :start],
-      [:live_schema, :reducer, :stop],
-      [:live_schema, :reducer, :exception],
+      [:live_schema, :action, :start],
+      [:live_schema, :action, :stop],
+      [:live_schema, :action, :exception],
       [:live_schema, :validation, :failure]
     ]
 
@@ -104,26 +104,26 @@ defmodule LiveSchema.Telemetry do
   end
 
   @doc false
-  def handle_event([:live_schema, :reducer, :start], _measurements, metadata, _config) do
+  def handle_event([:live_schema, :action, :start], _measurements, metadata, _config) do
     require Logger
-    Logger.debug("LiveSchema reducer starting: #{inspect(metadata.action)} in #{inspect(metadata.schema)}")
+    Logger.debug("LiveSchema action starting: #{inspect(metadata.action)} in #{inspect(metadata.schema)}")
   end
 
-  def handle_event([:live_schema, :reducer, :stop], measurements, metadata, _config) do
+  def handle_event([:live_schema, :action, :stop], measurements, metadata, _config) do
     require Logger
     duration_ms = System.convert_time_unit(measurements.duration, :native, :millisecond)
 
     Logger.debug(
-      "LiveSchema reducer completed: #{inspect(metadata.action)} in #{inspect(metadata.schema)} (#{duration_ms}ms)"
+      "LiveSchema action completed: #{inspect(metadata.action)} in #{inspect(metadata.schema)} (#{duration_ms}ms)"
     )
   end
 
-  def handle_event([:live_schema, :reducer, :exception], measurements, metadata, _config) do
+  def handle_event([:live_schema, :action, :exception], measurements, metadata, _config) do
     require Logger
     duration_ms = System.convert_time_unit(measurements.duration, :native, :millisecond)
 
     Logger.error("""
-    LiveSchema reducer failed: #{inspect(metadata.action)} in #{inspect(metadata.schema)}
+    LiveSchema action failed: #{inspect(metadata.action)} in #{inspect(metadata.schema)}
     Kind: #{metadata.kind}
     Reason: #{inspect(metadata.reason)}
     Duration: #{duration_ms}ms
@@ -139,7 +139,7 @@ defmodule LiveSchema.Telemetry do
   end
 
   @doc """
-  Wraps a reducer execution with telemetry events.
+  Wraps an action execution with telemetry events.
 
   Used internally by the generated apply/2 function.
   """
@@ -152,7 +152,7 @@ defmodule LiveSchema.Telemetry do
     }
 
     :telemetry.span(
-      [:live_schema, :reducer],
+      [:live_schema, :action],
       metadata,
       fn ->
         result = fun.()

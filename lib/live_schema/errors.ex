@@ -124,10 +124,10 @@ end
 
 defmodule LiveSchema.ActionError do
   @moduledoc """
-  Exception raised when an invalid reducer action is dispatched.
+  Exception raised when an invalid action is dispatched.
 
   This error occurs when trying to apply an action that doesn't
-  exist in the schema's reducers.
+  exist in the schema's actions.
 
   ## Fields
 

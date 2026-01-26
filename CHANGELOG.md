@@ -22,9 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Setter functions (`set_*/2`)
   - Constructors (`new/0`, `new/1`, `new!/1`)
   - Introspection (`__live_schema__/1`)
-- Reducer system for state transitions
-  - `reducer/2,3` macro for sync reducers
-  - `async_reducer/2,3` for async operations
+- Action system for state transitions
+  - `action/2,3` macro for sync actions
+  - `async_action/2,3` for async operations
   - Guard clause support
   - Before/after middleware hooks
 - Validation system
