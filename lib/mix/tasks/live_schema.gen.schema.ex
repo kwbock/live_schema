@@ -43,10 +43,13 @@ defmodule Mix.Tasks.LiveSchema.Gen.Schema do
 
   @impl Mix.Task
   def run(args) do
-    {opts, parsed, _} = OptionParser.parse(args, switches: [
-      no_actions: :boolean,
-      context: :string
-    ])
+    {opts, parsed, _} =
+      OptionParser.parse(args,
+        switches: [
+          no_actions: :boolean,
+          context: :string
+        ]
+      )
 
     case parsed do
       [] ->
@@ -167,10 +170,12 @@ defmodule Mix.Tasks.LiveSchema.Gen.Schema do
   defp build_field_opts(type, nullable) do
     opts = []
     opts = if nullable, do: ["null: true" | opts], else: opts
-    opts = case default_for_type(type, nullable) do
-      nil -> opts
-      default -> ["default: #{default}" | opts]
-    end
+
+    opts =
+      case default_for_type(type, nullable) do
+        nil -> opts
+        default -> ["default: #{default}" | opts]
+      end
 
     case opts do
       [] -> ""

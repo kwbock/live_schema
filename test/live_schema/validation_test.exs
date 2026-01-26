@@ -60,7 +60,9 @@ defmodule LiveSchema.ValidationTest do
       assert :ok = Validation.run_validator({:length, [min: 3, max: 5]}, "abc")
       assert :ok = Validation.run_validator({:length, [min: 3, max: 5]}, "abcde")
       assert {:error, {:length, _}} = Validation.run_validator({:length, [min: 3, max: 5]}, "ab")
-      assert {:error, {:length, _}} = Validation.run_validator({:length, [min: 3, max: 5]}, "abcdef")
+
+      assert {:error, {:length, _}} =
+               Validation.run_validator({:length, [min: 3, max: 5]}, "abcdef")
     end
 
     test "works with lists" do
@@ -101,7 +103,9 @@ defmodule LiveSchema.ValidationTest do
     end
 
     test "fails when value is in list" do
-      assert {:error, {:exclusion, msg}} = Validation.run_validator({:exclusion, [:blocked]}, :blocked)
+      assert {:error, {:exclusion, msg}} =
+               Validation.run_validator({:exclusion, [:blocked]}, :blocked)
+
       assert msg =~ "must not be one of"
     end
   end
@@ -129,7 +133,9 @@ defmodule LiveSchema.ValidationTest do
       end
 
       assert :ok = Validation.run_validator({:custom, validator}, 4)
-      assert {:error, {:custom, "must be even"}} = Validation.run_validator({:custom, validator}, 5)
+
+      assert {:error, {:custom, "must be even"}} =
+               Validation.run_validator({:custom, validator}, 5)
     end
   end
 
@@ -153,7 +159,9 @@ defmodule LiveSchema.ValidationTest do
     end
 
     test "fails when value is less than greater_than_or_equal_to threshold" do
-      assert {:error, {:number, msg}} = Validation.run_validator({:number, [greater_than_or_equal_to: 5]}, 4)
+      assert {:error, {:number, msg}} =
+               Validation.run_validator({:number, [greater_than_or_equal_to: 5]}, 4)
+
       assert msg =~ "must be greater than or equal to 5"
     end
 
@@ -175,7 +183,9 @@ defmodule LiveSchema.ValidationTest do
     end
 
     test "fails when value exceeds less_than_or_equal_to threshold" do
-      assert {:error, {:number, msg}} = Validation.run_validator({:number, [less_than_or_equal_to: 10]}, 11)
+      assert {:error, {:number, msg}} =
+               Validation.run_validator({:number, [less_than_or_equal_to: 10]}, 11)
+
       assert msg =~ "must be less than or equal to 10"
     end
 
@@ -197,7 +207,9 @@ defmodule LiveSchema.ValidationTest do
     end
 
     test "fails with non-number value" do
-      assert {:error, {:number, msg}} = Validation.run_validator({:number, [greater_than: 0]}, "5")
+      assert {:error, {:number, msg}} =
+               Validation.run_validator({:number, [greater_than: 0]}, "5")
+
       assert msg =~ "number validation requires a number"
 
       assert {:error, {:number, _}} = Validation.run_validator({:number, [less_than: 10]}, nil)
@@ -206,7 +218,9 @@ defmodule LiveSchema.ValidationTest do
 
   describe "run_validator/2 - unknown validator" do
     test "returns error for unknown validator type" do
-      assert {:error, {:unknown_type, msg}} = Validation.run_validator({:unknown_type, []}, "value")
+      assert {:error, {:unknown_type, msg}} =
+               Validation.run_validator({:unknown_type, []}, "value")
+
       assert msg =~ "unknown validator"
     end
   end
@@ -219,6 +233,7 @@ defmodule LiveSchema.ValidationTest do
 
     test "fails with invalid type" do
       field_info = %{type: :string}
+
       assert {:error, %ValidationError{field: :name, errors: errors}} =
                Validation.validate_field(:name, 123, field_info)
 
@@ -286,6 +301,7 @@ defmodule LiveSchema.ValidationTest do
       }
 
       assert :ok = Validation.validate_field(:count, 5, field_info)
+
       assert {:error, %ValidationError{errors: [{:custom, _}]}} =
                Validation.validate_field(:count, -1, field_info)
     end
@@ -344,9 +360,10 @@ defmodule LiveSchema.ValidationTest do
       }
 
       # Should return :ok and log a warning
-      log = capture_log(fn ->
-        assert :ok = Validation.handle_error({:error, error}, TestModule, :name)
-      end)
+      log =
+        capture_log(fn ->
+          assert :ok = Validation.handle_error({:error, error}, TestModule, :name)
+        end)
 
       assert log =~ "LiveSchema validation error"
       assert log =~ "TestModule"
@@ -379,9 +396,10 @@ defmodule LiveSchema.ValidationTest do
       }
 
       # Should not raise, defaults to log
-      log = capture_log(fn ->
-        assert :ok = Validation.handle_error({:error, error}, TestModule, :name)
-      end)
+      log =
+        capture_log(fn ->
+          assert :ok = Validation.handle_error({:error, error}, TestModule, :name)
+        end)
 
       assert log =~ "LiveSchema validation error"
     end

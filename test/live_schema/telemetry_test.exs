@@ -84,7 +84,8 @@ defmodule LiveSchema.TelemetryTest do
         end)
       end
 
-      assert_receive {:telemetry_event, [:live_schema, :action, :exception], measurements, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :exception], measurements,
+                      metadata}
 
       assert is_integer(measurements.duration)
       assert metadata.schema == TestSchema
@@ -101,7 +102,8 @@ defmodule LiveSchema.TelemetryTest do
         end)
       end
 
-      assert_receive {:telemetry_event, [:live_schema, :action, :exception], _measurements, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :exception], _measurements,
+                      metadata}
 
       assert metadata.kind == :throw
       assert metadata.reason == :thrown_value
@@ -114,7 +116,8 @@ defmodule LiveSchema.TelemetryTest do
         end)
       end
 
-      assert_receive {:telemetry_event, [:live_schema, :action, :exception], _measurements, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :action, :exception], _measurements,
+                      metadata}
 
       assert metadata.kind == :exit
       assert metadata.reason == :normal
@@ -137,7 +140,8 @@ defmodule LiveSchema.TelemetryTest do
     test "emits validation failure event" do
       Telemetry.emit_validation_failure(TestSchema, :email, [{:format, "invalid email"}])
 
-      assert_receive {:telemetry_event, [:live_schema, :validation, :failure], measurements, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :validation, :failure], measurements,
+                      metadata}
 
       assert measurements == %{}
       assert metadata.schema == TestSchema
@@ -153,7 +157,8 @@ defmodule LiveSchema.TelemetryTest do
 
       Telemetry.emit_validation_failure(TestSchema, :password, errors)
 
-      assert_receive {:telemetry_event, [:live_schema, :validation, :failure], _measurements, metadata}
+      assert_receive {:telemetry_event, [:live_schema, :validation, :failure], _measurements,
+                      metadata}
 
       assert metadata.errors == errors
     end
@@ -166,10 +171,11 @@ defmodule LiveSchema.TelemetryTest do
       assert :ok = Telemetry.attach_default_handlers()
 
       # Verify handlers are attached by emitting events and checking logs
-      log = capture_log(fn ->
-        Telemetry.span(TestSchema, :test_action, [], fn -> :ok end)
-        Telemetry.emit_validation_failure(TestSchema, :field, [])
-      end)
+      log =
+        capture_log(fn ->
+          Telemetry.span(TestSchema, :test_action, [], fn -> :ok end)
+          Telemetry.emit_validation_failure(TestSchema, :field, [])
+        end)
 
       # Verify log output was produced
       assert log =~ "LiveSchema action"
@@ -243,6 +249,7 @@ defmodule LiveSchema.TelemetryTest do
       log =
         capture_log(fn ->
           Telemetry.attach_default_handlers()
+
           try do
             Telemetry.span(TestSchema, :failing, [], fn ->
               raise "boom"

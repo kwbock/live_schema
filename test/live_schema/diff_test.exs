@@ -392,9 +392,10 @@ defmodule LiveSchema.DiffTest do
       old = SimpleState.new!(name: "old", count: 0)
       new = SimpleState.new!(name: "new", count: 5)
 
-      error = assert_raise ExUnit.AssertionError, fn ->
-        Diff.assert_changed(old, new, [:count, :active])
-      end
+      error =
+        assert_raise ExUnit.AssertionError, fn ->
+          Diff.assert_changed(old, new, [:count, :active])
+        end
 
       assert error.message =~ "Missing expected changes"
       assert error.message =~ ":active"
@@ -422,6 +423,7 @@ defmodule LiveSchema.DiffTest do
     test "handles list field changes" do
       defmodule ListState do
         use LiveSchema
+
         schema do
           field :items, {:list, :string}, default: []
         end
@@ -438,6 +440,7 @@ defmodule LiveSchema.DiffTest do
     test "handles map field changes" do
       defmodule MapState do
         use LiveSchema
+
         schema do
           field :metadata, :map, default: %{}
         end

@@ -224,7 +224,10 @@ defmodule LiveSchema.Test do
     defp type_generator(:boolean), do: StreamData.boolean()
     defp type_generator(:atom), do: StreamData.atom(:alphanumeric)
     defp type_generator(:any), do: StreamData.term()
-    defp type_generator(:map), do: StreamData.map_of(StreamData.atom(:alphanumeric), StreamData.term())
+
+    defp type_generator(:map),
+      do: StreamData.map_of(StreamData.atom(:alphanumeric), StreamData.term())
+
     defp type_generator(:list), do: StreamData.list_of(StreamData.term())
 
     defp type_generator({:list, inner}) do

@@ -277,5 +277,4 @@ defmodule LiveSchema.ValidationError do
         end)
     }
   end
-
 end

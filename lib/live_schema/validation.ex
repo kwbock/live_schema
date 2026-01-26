@@ -231,7 +231,11 @@ defmodule LiveSchema.Validation do
 
       :log ->
         require Logger
-        Logger.warning("LiveSchema validation error in #{inspect(module)}: #{Exception.message(error)}")
+
+        Logger.warning(
+          "LiveSchema validation error in #{inspect(module)}: #{Exception.message(error)}"
+        )
+
         :ok
 
       :ignore ->

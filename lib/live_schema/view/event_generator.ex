@@ -60,7 +60,7 @@ defmodule LiveSchema.View.EventGenerator do
       handlers = generate_all_handlers(schemas)
 
       quote do
-        unquote_splicing(handlers)
+        (unquote_splicing(handlers))
       end
     end
   end
@@ -166,7 +166,10 @@ defmodule LiveSchema.View.EventGenerator do
         quote do
           def handle_event(unquote(event_name), _params, socket) do
             current_state = Map.fetch!(socket.assigns, unquote(assign_key))
-            {:async, work_fn} = unquote(schema_module).apply(current_state, {unquote(action_name)})
+
+            {:async, work_fn} =
+              unquote(schema_module).apply(current_state, {unquote(action_name)})
+
             {:noreply, start_async(socket, unquote(action_name), work_fn)}
           end
         end
@@ -202,7 +205,10 @@ defmodule LiveSchema.View.EventGenerator do
       quote do
         def handle_event(unquote(event_name), _params, socket) do
           current_state = Map.fetch!(socket.assigns, unquote(assign_key))
-          {:reply, payload, new_state} = unquote(schema_module).apply(current_state, {unquote(action_name)})
+
+          {:reply, payload, new_state} =
+            unquote(schema_module).apply(current_state, {unquote(action_name)})
+
           {:reply, payload, Phoenix.Component.assign(socket, unquote(assign_key), new_state)}
         end
       end
@@ -214,7 +220,10 @@ defmodule LiveSchema.View.EventGenerator do
         def handle_event(unquote(event_name), params, socket) do
           unquote_splicing(coerce_statements)
           current_state = Map.fetch!(socket.assigns, unquote(assign_key))
-          {:reply, payload, new_state} = unquote(schema_module).apply(current_state, unquote(action_tuple))
+
+          {:reply, payload, new_state} =
+            unquote(schema_module).apply(current_state, unquote(action_tuple))
+
           {:reply, payload, Phoenix.Component.assign(socket, unquote(assign_key), new_state)}
         end
       end
@@ -227,7 +236,8 @@ defmodule LiveSchema.View.EventGenerator do
       arg_key = to_string(arg_name)
 
       quote do
-        unquote(arg_var) = LiveSchema.View.Coerce.coerce(params[unquote(arg_key)], unquote(arg_type))
+        unquote(arg_var) =
+          LiveSchema.View.Coerce.coerce(params[unquote(arg_key)], unquote(arg_type))
       end
     end)
   end

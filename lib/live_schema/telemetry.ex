@@ -106,7 +106,10 @@ defmodule LiveSchema.Telemetry do
   @doc false
   def handle_event([:live_schema, :action, :start], _measurements, metadata, _config) do
     require Logger
-    Logger.debug("LiveSchema action starting: #{inspect(metadata.action)} in #{inspect(metadata.schema)}")
+
+    Logger.debug(
+      "LiveSchema action starting: #{inspect(metadata.action)} in #{inspect(metadata.schema)}"
+    )
   end
 
   def handle_event([:live_schema, :action, :stop], measurements, metadata, _config) do

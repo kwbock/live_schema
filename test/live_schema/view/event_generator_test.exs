@@ -30,12 +30,12 @@ defmodule LiveSchema.View.EventGeneratorTest do
     end
 
     # Action with typed argument
-    action :add_amount, [amount: :integer] do
+    action :add_amount, amount: :integer do
       set_count(state, state.count + amount)
     end
 
     # Action with multiple typed arguments
-    action :set_both, [count: :integer, name: :string] do
+    action :set_both, count: :integer, name: :string do
       state
       |> set_count(count)
       |> set_name(name)
@@ -54,7 +54,7 @@ defmodule LiveSchema.View.EventGeneratorTest do
       set_data(state, [])
     end
 
-    async_action :load_data, [filter: :atom] do
+    async_action :load_data, filter: :atom do
       # Simulate async work
       data = ["item_#{filter}"]
       set_data(state, data)
@@ -71,7 +71,9 @@ defmodule LiveSchema.View.EventGeneratorTest do
     test "generates handle_event for action without arguments" do
       socket = new_socket(%{state: CounterState.new!()})
 
-      assert {:noreply, socket} = SingleEventView.handle_event("CounterState:increment", %{}, socket)
+      assert {:noreply, socket} =
+               SingleEventView.handle_event("CounterState:increment", %{}, socket)
+
       assert socket.assigns.state.count == 1
     end
 
@@ -121,7 +123,7 @@ defmodule LiveSchema.View.EventGeneratorTest do
         set_expanded(state, !state.expanded)
       end
 
-      action :set_width, [width: :integer] do
+      action :set_width, width: :integer do
         set_width(state, width)
       end
     end
@@ -227,7 +229,7 @@ defmodule LiveSchema.View.EventGeneratorTest do
         field :value, :integer, default: 0
       end
 
-      action :set_value, [value: :integer] do
+      action :set_value, value: :integer do
         set_value(state, value)
       end
     end
@@ -249,7 +251,11 @@ defmodule LiveSchema.View.EventGeneratorTest do
 
       # Special case uses user's handler
       assert {:noreply, socket} =
-               OverrideView.handle_event("OverrideState:set_value", %{"value" => "special"}, socket)
+               OverrideView.handle_event(
+                 "OverrideState:set_value",
+                 %{"value" => "special"},
+                 socket
+               )
 
       assert socket.assigns.state.value == 999
     end
@@ -292,7 +298,7 @@ defmodule LiveSchema.View.EventGeneratorTest do
       end
 
       # Reaction with typed argument
-      reaction :get_item, [id: :integer] do
+      reaction :get_item, id: :integer do
         item = Enum.find(state.items, &(&1.id == id))
         {state, %{item: item}}
       end
@@ -304,7 +310,7 @@ defmodule LiveSchema.View.EventGeneratorTest do
       end
 
       # Reaction with multiple typed arguments
-      reaction :add_and_get, [amount: :integer, label: :string] do
+      reaction :add_and_get, amount: :integer, label: :string do
         new_state = set_count(state, state.count + amount)
         {new_state, %{count: new_state.count, label: label}}
       end

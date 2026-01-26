@@ -6,6 +6,7 @@ defmodule LiveSchema.MiddlewareTest do
   setup do
     # Start an agent to track hook calls for each test
     {:ok, agent} = Agent.start_link(fn -> [] end, name: :hook_tracker)
+
     on_exit(fn ->
       try do
         if Process.whereis(:hook_tracker), do: Agent.stop(:hook_tracker)
@@ -13,6 +14,7 @@ defmodule LiveSchema.MiddlewareTest do
         :exit, _ -> :ok
       end
     end)
+
     {:ok, agent: agent}
   end
 
@@ -24,7 +26,7 @@ defmodule LiveSchema.MiddlewareTest do
   defmodule BeforeHookSchema do
     use LiveSchema
 
-    before_action :on_before
+    before_action(:on_before)
 
     schema do
       field :count, :integer, default: 0
@@ -45,7 +47,7 @@ defmodule LiveSchema.MiddlewareTest do
   defmodule AfterHookSchema do
     use LiveSchema
 
-    after_action :on_after
+    after_action(:on_after)
 
     schema do
       field :count, :integer, default: 0
@@ -66,8 +68,8 @@ defmodule LiveSchema.MiddlewareTest do
   defmodule BothHooksSchema do
     use LiveSchema
 
-    before_action :on_before
-    after_action :on_after
+    before_action(:on_before)
+    after_action(:on_after)
 
     schema do
       field :value, :string, default: ""
@@ -94,10 +96,10 @@ defmodule LiveSchema.MiddlewareTest do
   defmodule MultipleHooksSchema do
     use LiveSchema
 
-    before_action :before_first
-    before_action :before_second
-    after_action :after_first
-    after_action :after_second
+    before_action(:before_first)
+    before_action(:before_second)
+    after_action(:after_first)
+    after_action(:after_second)
 
     schema do
       field :count, :integer, default: 0
@@ -218,10 +220,10 @@ defmodule LiveSchema.MiddlewareTest do
 
       # Verify state transitions in each call
       assert [
-        {:after, 0, 1, _},
-        {:after, 1, 2, _},
-        {:after, 2, 3, _}
-      ] = calls
+               {:after, 0, 1, _},
+               {:after, 1, 2, _},
+               {:after, 2, 3, _}
+             ] = calls
     end
   end
 
@@ -235,7 +237,8 @@ defmodule LiveSchema.MiddlewareTest do
       assert length(calls) == 2
 
       # Before should be first, after should be second
-      assert [{:before, "", {:set_value, "hello"}}, {:after, "", "hello", {:set_value, "hello"}}] = calls
+      assert [{:before, "", {:set_value, "hello"}}, {:after, "", "hello", {:set_value, "hello"}}] =
+               calls
     end
 
     test "before sees pre-change state, after sees both states" do
@@ -262,11 +265,12 @@ defmodule LiveSchema.MiddlewareTest do
       calls = get_calls()
 
       # Filter to just before hooks
-      before_calls = Enum.filter(calls, fn
-        :before_first -> true
-        :before_second -> true
-        _ -> false
-      end)
+      before_calls =
+        Enum.filter(calls, fn
+          :before_first -> true
+          :before_second -> true
+          _ -> false
+        end)
 
       assert before_calls == [:before_first, :before_second]
     end
@@ -279,11 +283,12 @@ defmodule LiveSchema.MiddlewareTest do
       calls = get_calls()
 
       # Filter to just after hooks
-      after_calls = Enum.filter(calls, fn
-        :after_first -> true
-        :after_second -> true
-        _ -> false
-      end)
+      after_calls =
+        Enum.filter(calls, fn
+          :after_first -> true
+          :after_second -> true
+          _ -> false
+        end)
 
       assert after_calls == [:after_first, :after_second]
     end
@@ -316,7 +321,7 @@ defmodule LiveSchema.MiddlewareTest do
       defmodule MultiActionSchema do
         use LiveSchema
 
-        before_action :track_action
+        before_action(:track_action)
 
         schema do
           field :count, :integer, default: 0
@@ -347,10 +352,10 @@ defmodule LiveSchema.MiddlewareTest do
       calls = get_calls()
 
       assert calls == [
-        {:action, :increment},
-        {:action, :set_name},
-        {:action, :increment}
-      ]
+               {:action, :increment},
+               {:action, :set_name},
+               {:action, :increment}
+             ]
     end
   end
 
@@ -359,7 +364,7 @@ defmodule LiveSchema.MiddlewareTest do
       defmodule SideEffectSchema do
         use LiveSchema
 
-        after_action :send_message
+        after_action(:send_message)
 
         schema do
           field :count, :integer, default: 0
