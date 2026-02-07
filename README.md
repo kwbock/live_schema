@@ -71,6 +71,21 @@ defmodule MyAppWeb.PostsLive do
 end
 ```
 
+or
+
+```elixir
+defmodule MyAppWeb.PostsLive do
+  use MyAppWeb, :live_view
+  use LiveSchema.View, schema: __MODULE__.State, generate_events: true
+
+  def mount(_params, _session, socket) do
+    {:ok, assign(socket, :state, State.new())}
+  end
+
+  # Auto generated handle_event("State:select_post", %{"id" => id}, socket)
+end
+```
+
 ## Documentation
 
 - [Getting Started](guides/getting-started.md)
