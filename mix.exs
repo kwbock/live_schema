@@ -1,7 +1,7 @@
 defmodule LiveSchema.MixProject do
   use Mix.Project
 
-  @version "0.0.1"
+  @version "0.1.0"
   @source_url "https://github.com/kwbock/live_schema"
 
   def project do
@@ -74,7 +74,7 @@ defmodule LiveSchema.MixProject do
         "CHANGELOG.md",
         "guides/getting-started.md",
         "guides/schema-dsl.md",
-        "guides/reducers.md",
+        "guides/actions.md",
         "guides/validation.md",
         "guides/phoenix-integration.md",
         "guides/testing.md",
