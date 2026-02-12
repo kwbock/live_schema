@@ -18,7 +18,7 @@ Add `live_schema` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:live_schema, "~> 0.0.1"}
+    {:live_schema, "~> 0.1.0"}
   ]
 end
 ```
